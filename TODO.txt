@@ -1,9 +1,0 @@
-TODO
-FIX Contains for IO Trap Check
-FIX TRAP Arr accessability/Setting
-FIX DISPATCHER
-Check Terminate is WOring Properly
-Check IO_RET when IO_Trap is fixed
-Fix Output
-Debugging/ segfault
-a lot todo

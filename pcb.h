@@ -1,76 +1,104 @@
-typedef struct cpu_context {// CPU state for the LC-3 processor
-  unsigned int pc;
-  unsigned int ir;
-  unsigned int psr;
-  unsigned int r0;
-  unsigned int r1;
-  unsigned int r2;
-  unsigned int r3;
-  unsigned int r4;
-  unsigned int r5;
-  unsigned int r6;
-  unsigned int r7;
-} CPU_context_s;// _s means this is a structure definition
+/*
+TCSS422 - Operating Systems
+Problem 4
 
-typedef CPU_context_s* CPU_context_p;// _p means that this is a pointer to a structure
+Group Members:
+Joshua Lau
+Alisher Baimenov
 
-enum state_type {new, ready, running, interrupted, waiting, halted, zombie, blocked};
+Changes:
+    We added to variables the the PCB_s struct, a bool value to
+    determine whether or not the PCB is privileged and added
+    a cycles variable to track how many cycles the PCB has run.
 
-typedef struct pcb {// Process control block
-  unsigned int pid; // process identification
-  enum state_type state; // process state (running, waiting, etc.)
-  unsigned int parent; // parent process pid
-  unsigned char priority; // 0 is highest –15is lowest.
-  unsigned char * mem; // start of process in memory
-  unsigned int size; // number of bytes in process
-  unsigned char channel_no; // which I/O device or service Q// if process is blocked, which fifo_queue it is in
-  CPU_context_p context; // set of cpu registers// other items to be added as needed.
+    This information is specific to the PCB so we decided to store this
+    information here.
+*/
 
-  unsigned int MAX_PC;
-  time_t creation;
-  time_t termination;
-  unsigned int terminate;
-  unsigned int term_count;
-  unsigned int * IO_1_TRAPS;
-  unsigned int * IO_2_TRAPS;
+#ifndef PCB_H
+#define PCB_H
 
-} PCB_s;
+// Pointer to the cpu_context structure.
+typedef struct CPU_context_s *CPU_context_p;
 
-typedef PCB_s* PCB_p;
+typedef struct PCB_s * PCB_p;
 
-PCB_p constructor();
-int destructor(PCB_p pcb);
-unsigned int getPid(PCB_p pcb);
-unsigned int getParent(PCB_p pcb);
-unsigned char getPriority(PCB_p pcb);
-unsigned char * getMem(PCB_p pcb);
-unsigned int getSize(PCB_p pcb);
-unsigned char getChannel_no(PCB_p pcb);
-unsigned int getPC(PCB_p pcb);
+enum state_type {new, ready, running, interrupted, waiting, halted};
 
-unsigned int get_MAX_PC(PCB_p pcb);
-int set_MAX_PC(PCB_p pcb, int the_Max_pc);
-time_t get_creation(PCB_p pcb);
-int set_creation(PCB_p pcb, time_t theTime);
-time_t get_termination(PCB_p pcb);
-int set_termination(PCB_p pcb, time_t theTime);
+/* constructor */
+// Creates a pcb with the PCB pointer and the CPU_context pointer
+PCB_p create_pcb();
+
+/* deconstructor */
+// Deallocates the memory for the pcb passed in.
+void destroy_pcb(PCB_p p);
+
+/* functions */
+
+//Check if PC equals to any of the values of I/O array
+//Returns 1 if io_1 contains,
+//Returns 2 if io_2 contains,
+//Returns 0 otherwise.
+int io_contains_pc(PCB_p pcb);
+
+// Assigns the PID.
+void set_pid(PCB_p pcb, unsigned int num);
+
+// Returns the pid of the pcb.
+unsigned int get_pid(PCB_p pcb);
+
+//Returns second of creation of pcb.
+int get_creation_sec(PCB_p pcb);
+
+//Sets max_pc value.
+void set_max_pc(PCB_p pcb, unsigned int new_max_pc);
+
+//Returns max_pc value.
+unsigned int get_max_pc(PCB_p pcb);
+
+//Sets terminate value of the pcb.
+void set_terminate(PCB_p pcb, unsigned int new_terminate);
+
+//Returns the terminate value of the pcb.
 unsigned int get_terminate(PCB_p pcb);
-int set_terminate(PCB_p pcb, unsigned int theInt);
-unsigned int get_term_count(PCB_p pcb);
-int set_term_count(PCB_p pcb, unsigned int theInt);
-int *  get_IO_1_TRAPS(PCB_p pcb);
-int set_IO_1_TRAPS(PCB_p pcb, int * theArr);
-int * get_IO_2_TRAPS (PCB_p pcb);
-int set_IO_2_TRAPS(PCB_p pcb, int * theArr);
 
-int setState(PCB_p pcb, enum state_type new_state);
-int assignPid(PCB_p pcb, unsigned int * currentPid);
-int setPid(PCB_p pcb, unsigned int pid);
-int setParent(PCB_p pcb, unsigned int parent);
-int setPriority(PCB_p pcb, unsigned char priority);
-int setMem(PCB_p pcb, unsigned char * mem);
-int setSize(PCB_p pcb, unsigned int size);
-int setChannel_no(PCB_p pcb, unsigned char channel_no);
-int setPC(PCB_p pcb, unsigned int the_pc);
-char * toString(PCB_p pcb);
-char * context_toString(CPU_context_p context);
+// Sets the state_type of the pcb passed in.
+void set_state(PCB_p pcb, enum state_type type);
+
+// Returns the state of the pcb.
+enum state_type get_state(PCB_p pcb);
+
+// Sets the priority of the pcb.
+void set_priority(PCB_p pcb, unsigned char priority);
+
+// gets the priority of the pcb.
+unsigned char get_priority(PCB_p pcb);
+
+// Returns the cycles the pcb has run.
+unsigned int get_cycles(PCB_p pcb);
+
+// Sets the cycles this pcb has run.
+void set_cycles(PCB_p pcb, unsigned int newCycles);
+
+// returns the pcbs pc value.
+unsigned int get_pc(PCB_p pcb);
+
+// Sets the pcbs pc value to the given pc.
+void set_pc(PCB_p pcb, unsigned int pc);
+
+// Returns whether or no the pcb is privileged.
+int isPrivileged(PCB_p pcb);
+
+// Sets the pcb to privileged.
+void setPrivileged(PCB_p pcb);
+
+// Prints a string representation of the pcb passed in.
+void print_pcb_file(PCB_p pcb, FILE * fp);
+
+void print_pcb(PCB_p pcb);
+
+void print_context(CPU_context_p context, FILE * fp);
+
+const char* get_state_name(enum state_type state);
+
+#endif

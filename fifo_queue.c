@@ -1,121 +1,109 @@
+/*
+TCSS422 - Operating Systems
+Problem 4
+
+Group Members:
+Joshua Lau
+Alisher Baimenov
+*/
+
+
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+#include <stdio.h>
+
 #include "pcb.h"
 #include "fifo_queue.h"
 
+struct FIFO_Queue_s {
+    Node_p front;
+    Node_p rear;
+    unsigned int count;
+} FIFO_Queue_s;
 
-fifo_queue fifo_queue_constructor() {
-  fifo_queue q = malloc(sizeof(fifo_q));
-  q->head = NULL;
-  q->tail = NULL;
-  q->count = 0;
-  q->quantum = 0;
-  return q;
-}
+struct Node_s{
+    PCB_p data;
+    Node_p next;
+} Node_s;
 
-int fifo_destructor(fifo_queue q) {
-  if (q == NULL) return -1;
-  while (q->count > 0) {
-    PCB_p temp = q_dequeue(q);
-    destructor(temp);
-  }
-  free(q);
-  return 0;
-}
-
-int q_enqueue(fifo_queue the_queue, PCB_p theitem) {
-  if (the_queue == NULL) return -1;
-  q_node* node = (q_node*) malloc(sizeof(q_node));
-  node->next = NULL;
-  node->data = theitem;
-  the_queue->count++;
-  // printf("\nbefore\n");
-  if (the_queue->head==NULL) {
-    the_queue->head=node;
-    the_queue->tail=node;
-    return 0;
-  }
-  // printf("after\n");
-  the_queue->tail->next = node;
-  // printf("after\n");
-  the_queue->tail = node;
-  // printf("return\n");
-  return 0;
-}
-
-int q_is_empty(fifo_queue the_queue) {
-  if (the_queue == NULL) return -1;
-  return the_queue->count == 0 ? 0 : 1;
-}
-
-PCB_p q_peek(fifo_queue q) {
-  if (q == NULL) return NULL;
-  return q->head->data;
-}
-
-PCB_p q_dequeue(fifo_queue the_queue) {
-  if (the_queue == NULL) return NULL;
-  if (q_is_empty(the_queue)==0) {
-      return NULL;
-  }
-  q_node* node = the_queue->head;
-  if (the_queue->head==the_queue->tail) {
-    the_queue->head = NULL;
-    the_queue->tail = NULL;
-  } else {
-    the_queue->head = the_queue->head->next;
-  }
-  PCB_p tmp = node->data;
-  free(node);
-  the_queue->count--;
-  return tmp;
-}
-
-int get_count(fifo_queue the_queue) {
-  if (the_queue == NULL) return -1;
-  return the_queue->count;
-}
-
-char * q_toString(fifo_queue q) {
-  if (q == NULL) return NULL;
-  char * list_rep = malloc(1024);
-  memset(list_rep, 0, 1024);
-  char * init_str = malloc(256);
-  memset(list_rep, 0, 256);
-  int count = q->count;
-  sprintf(init_str, "Count=%d: ", q->count);
-  strcat(list_rep, init_str);
-  free(init_str);
-
-  // special case
-  if (count == 0) {
-    strcat(list_rep, "-*\n");
-  }
-
-  int i;
-  for (i = 0; i < count; i++) {
-    char * inner = malloc(16);
-    memset(inner, 0, 16);
-    PCB_p p = q_dequeue(q);
-    if (i == count - 1) {
-      char* pcb_rep = toString(p);
-      sprintf(inner, "P%d-*\n", getPid(p));
-      strcat(list_rep, inner);
-      free(pcb_rep);
-    } else {
-      sprintf(inner, "P%d->", getPid(p));
-      strcat(list_rep, inner);
+FIFO_Queue_p create_fifo_queue() {
+    FIFO_Queue_p queue = malloc(sizeof(struct FIFO_Queue_s));
+    if(queue == 0) {
+        return 0;
     }
-    q_enqueue(q, p);
-    free(inner);
-  }
-
-  return list_rep;
+    queue->count = 0;
+    queue->front = NULL;
+    queue->rear = NULL;
+    return queue;
 }
 
-int q_setquantum(fifo_queue q, int val) {
-  if (q == NULL) return 1;
-  q->quantum = val;
-  return 0;
+/* Deconstructor */
+void destroy(FIFO_Queue_p fifo) {
+    while(!fifo_is_empty(fifo)) {
+        fifo_dequeue(fifo);
+    }
+    free(fifo);
+}
+
+/* Functions */
+int fifo_is_empty(FIFO_Queue_p fifo) {
+    return fifo->count == 0;
+}
+
+void fifo_enqueue(FIFO_Queue_p fifo, PCB_p data) {
+    if(fifo == NULL || data == NULL) {
+        return;
+    }
+    Node_p new_node = malloc(sizeof(struct Node_s));
+    new_node->data = data;
+    if(fifo_is_empty(fifo)) {
+        fifo->rear = new_node;
+        fifo->front = fifo->rear;
+    } else {
+        fifo->rear->next = new_node;
+        fifo->rear = new_node;
+    }
+    fifo->rear->next = NULL;
+    fifo->count++;
+}
+
+PCB_p fifo_dequeue(FIFO_Queue_p fifo) {
+    if (!fifo_is_empty(fifo)) {
+        Node_p removed_node = fifo->front;
+        PCB_p pcb = removed_node->data;
+        Node_p next_front = fifo->front->next;
+        free(fifo->front);
+        fifo->front = next_front;
+        fifo->count--;
+        return pcb;
+    } else {
+        return 0;
+    }
+}
+
+unsigned int fifo_size(FIFO_Queue_p fifo) {
+    return fifo->count;
+}
+
+void print_fifo_queue(FIFO_Queue_p fifo) {
+    if(fifo == NULL) {
+        return;
+    }
+
+    Node_p front = fifo->front;
+
+    int index = 1;
+    if(fifo->count != 0) {
+        printf( "Count=%d: ", fifo->count);
+        while (front != NULL) {
+            unsigned int process = get_pid(front->data);
+            printf( "p%d", process);
+            printf( "->");
+            index++;
+            front = front->next;
+        }
+        printf("*");
+    } else {
+        printf("Count=%d: ->* ", fifo->count);
+}
 }

@@ -1,23 +1,38 @@
-typedef struct q_node {
-  struct q_node* next;
-  PCB_p data; 
-} q_node;
+/*
+TCSS422 - Operating Systems
+Problem 4
+
+Group Members:
+Joshua Lau
+Alisher Baimenov
+*/
 
 
-typedef struct fifo_q {
-  int count;
-  q_node* head;
-  q_node* tail;
-  int quantum;
-} fifo_q;
+#ifndef FIFO_QUEUE_H
+#define FIFO_QUEUE_H
 
-typedef fifo_q * fifo_queue;
+#include "pcb.h"
 
-int fifo_destructor(fifo_queue q);
-fifo_queue fifo_queue_constructor();
-int q_enqueue(fifo_queue the_queue, PCB_p theitem);
-PCB_p q_dequeue(fifo_queue the_queue);
-int q_is_empty(fifo_queue the_queue);
-PCB_p q_peek(fifo_queue q);
-char * q_toString(fifo_queue q);
-int q_setquantum(fifo_queue q, int val);
+
+typedef struct FIFO_Queue_s * FIFO_Queue_p;
+
+typedef struct Node_s * Node_p;
+
+/* Constructor */
+FIFO_Queue_p create_fifo_queue();
+
+/* Deconstructor */
+void destroy(FIFO_Queue_p fifo);
+
+/* Functions */
+int fifo_is_empty(FIFO_Queue_p fifo);
+
+unsigned int fifo_size(FIFO_Queue_p fifo);
+
+void fifo_enqueue(FIFO_Queue_p fifo, PCB_p data);
+
+PCB_p fifo_dequeue(FIFO_Queue_p fifo);
+
+void print_fifo_queue(FIFO_Queue_p fifo);
+
+#endif

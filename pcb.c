@@ -1,221 +1,285 @@
+/*
+TCSS422 - Operating Systems
+Problem 4
+
+Group Members:
+Joshua Lau
+Alisher Baimenov
+
+Changes:
+    We added to variables the the PCB_s struct, a bool value to
+    determine whether or not the PCB is privileged and added
+    a cycles variable to track how many cycles the PCB has run.
+
+    This information is specific to the PCB so we decided to store this
+    information here.
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include "pcb.h"
-#include <errno.h>
 #include <time.h>
 
-static unsigned int pid = 0;
+#include "pcb.h"
 
-PCB_p constructor() {
-  PCB_p pcb = malloc(sizeof(PCB_s));
-  CPU_context_p context = malloc(sizeof(CPU_context_s));
-  enum state_type state = new;
-  context->pc = 0;
-  context->ir = 0;
-  context->psr = 0;
-  context->r0 = 0;
-  context->r1 = 0;
-  context->r2 = 0;
-  context->r3 = 0;
-  context->r4 = 0;
-  context->r5 = 0;
-  context->r6 = 0;
-  context->r7 = 0;
-  pcb->priority = 0;
-  pcb->context = context;
-  pcb->state = state;
-  pcb->parent = 0;
-  pcb->mem = NULL;
-  pcb->size = 0;
-  pcb->channel_no = 0;
-  pcb->parent = 0;
+// Global to determine the next possible PID value for a new PCB
+unsigned int currentpid = 1;
 
-  pcb->MAX_PC = 99999;
-  pcb->creation;
-  pcb->termination;
-  pcb->terminate = 9999;
-  pcb->term_count = 0;
-  pcb->IO_1_TRAPS = malloc(sizeof(unsigned int)*4);
-  pcb->IO_2_TRAPS = malloc(sizeof(unsigned int)*4);
-  
-  assignPid(pcb, &pid);
-  return pcb;
-}
-int destructor(PCB_p pcb) {
-  if (pcb == NULL) return -1;
-  if (pcb->mem != NULL) free(pcb->mem);
-  if (pcb->context != NULL) free(pcb->context);
-  free(pcb);
-  return 0;
-}
-int assignPid(PCB_p pcb, unsigned int * currentPid) {
-  if (pcb == NULL) return -1;
-  pcb->pid = *currentPid;
-  *currentPid = *currentPid + 1;
-  return 0;
-}
-unsigned int getPid(PCB_p pcb) {
-  if (pcb == NULL) return -1;
-  return pcb->pid;
-}
-unsigned int getParent(PCB_p pcb) {
-  if (pcb == NULL) return -1;
-  return pcb->parent;
-}
-unsigned char getPriority(PCB_p pcb) {
-  if (pcb == NULL) return -1;
-  return pcb->priority;
-}
-unsigned char * getMem(PCB_p pcb) {
-  if (pcb == NULL) return NULL;
-  return pcb->mem;
-}
-unsigned int getSize(PCB_p pcb) {
-  if (pcb == NULL) return -1;
-  return pcb->size;
-}
-unsigned char getChannel_no(PCB_p pcb) {
-  if (pcb == NULL) return -1;
-  return pcb->channel_no;
-}
-CPU_context_p getContext(PCB_p pcb) {
-  if (pcb == NULL) return NULL;
-  return pcb->context;
-}
-int setPid(PCB_p pcb, unsigned int pid) {
-  if (pcb == NULL) return -1;
-  pcb->pid = pid;
-  return 0;
-}
-int setParent(PCB_p pcb, unsigned int parent) {
-  if (pcb == NULL) return -1;
-  pcb->parent = parent;
-  return 0;
-}
-int setPriority(PCB_p pcb, unsigned char priority) {
-  if (pcb == NULL) return -1;
-  pcb->priority = priority;
-  return 0;
-}
-int setMem(PCB_p pcb, unsigned char * mem) {
-  if (pcb == NULL) return -1;
-  pcb->mem = mem;
-  return 0;
-}
-int setSize(PCB_p pcb, unsigned int size) {
-  if (pcb == NULL) return -1;
-  pcb->size = size;
-  return 0;
-}
-int setChannel_no(PCB_p pcb, unsigned char channel_no) {
-  if (pcb == NULL) return -1;
-  pcb->channel_no = channel_no;
-  return 0;
+// Structure definition for the CPU State for the LC-3 Processor.
+struct CPU_context_s {
+    unsigned int pc;
+    unsigned int ir;
+    unsigned int psr;
+    unsigned int r0;
+    unsigned int r1;
+    unsigned int r2;
+    unsigned int r3;
+    unsigned int r4;
+    unsigned int r5;
+    unsigned int r6;
+    unsigned int r7;
+} CPU_context_s;
+
+// Structure definition for the process control block.
+//Each PCB gets unique IO_1/2_traps value.
+struct PCB_s {
+    unsigned int pid;
+    enum state_type state;
+    unsigned int parent;
+    unsigned char priority;
+    unsigned char *mem;
+    unsigned int size;
+    unsigned char channel_no;
+    CPU_context_p context;
+    unsigned int cycles;
+    _Bool privileged;
+
+    unsigned int max_pc;
+    time_t t;
+    struct tm creation;
+    struct tm termination;
+    unsigned int terminate;
+    unsigned int term_count;
+    unsigned int io_1_traps[4];
+    unsigned int io_2_traps[4];
+} PCB_s;
+
+/* constructor */
+// Creates a pcb with the PCB pointer and the CPU_context pointer
+PCB_p create_pcb() {
+    PCB_p pcb = (PCB_p) malloc(sizeof(PCB_s));
+    pcb->context = (CPU_context_p) malloc(sizeof(CPU_context_s));
+    if (!pcb) {
+        return NULL;
+    } else {
+        pcb->context->pc = 0;
+        pcb->context->ir = 0;
+        pcb->context->psr = 0;
+        pcb->context->r0 = 0;
+        pcb->context->r1 = 0;
+        pcb->context->r2 = 0;
+        pcb->context->r3 = 0;
+        pcb->context->r4 = 0;
+        pcb->context->r5 = 0;
+        pcb->context->r6 = 0;
+        pcb->context->r7 = 0;
+
+        pcb->pid = currentpid++;
+        pcb->state = new;
+        pcb->parent = 0;
+        pcb->priority = 0;
+        pcb->mem = 0;
+        pcb->size = 0;
+        pcb->channel_no = 0;
+        pcb->cycles = 0;
+        pcb->privileged = 0;
+        pcb->max_pc = 2345;
+        pcb->t = time(NULL);
+        pcb->creation = *localtime(&(pcb->t));
+        //pcb->termination = ???
+        pcb->terminate = 2;
+        pcb->term_count = 0;
+        srand(time(NULL));
+        int i;
+        for (i = 0; i < 4; i++) {
+            int val = rand() % (pcb->max_pc);
+            if (i == 0) {
+                pcb->io_1_traps[i] = val;
+            } else {
+                while (val == pcb->io_1_traps[i - 1]) {
+                    val = rand() % (pcb->max_pc);
+                }
+                pcb->io_1_traps[i] = val;
+            }
+        }
+        for (i = 0; i < 4; i++) {
+            int val = rand() % (pcb->max_pc);
+            if (i == 0) {
+                pcb->io_2_traps[i] = val;
+            } else {
+                while (val == pcb->io_2_traps[i - 1]) {
+                    val = rand() % (pcb->max_pc);
+                }
+                pcb->io_2_traps[i] = val;
+            }
+        }
+    }
+    return pcb;
 }
 
-unsigned int get_MAX_PC(PCB_p pcb) {
-  return pcb->MAX_PC;
+/* deconstructor */
+// Deallocates the memory for the pcb passed in.
+void destroy_pcb(PCB_p p) {
+    if (!p) {
+        return;
+    } else {
+        free(p->context);
+        free(p);
+    }
 }
 
-int set_MAX_PC(PCB_p pcb, int the_Max_pc) {
-  if (pcb == NULL) return -1;
-  pcb->MAX_PC = the_Max_pc;
-  return 0;
+/* functions */
+
+
+//Check if PC equals to any of the values of I/O array
+//Returns 1 if io_1 contains,
+//Returns 2 if io_2 contains,
+//Returns 0 otherwise.
+int io_contains_pc(PCB_p pcb) {
+    int pc = pcb->context->pc;
+    int i;
+    for (i = 0; i < 4; i++) {
+        if (pcb->io_1_traps[i] == pc) {
+            return 1;
+        } else if (pcb->io_2_traps[i] == pc) {
+            return 2;
+        }
+    }
+    return 0;
 }
 
-time_t get_creation(PCB_p pcb) {
-  return pcb->creation;
+
+
+// Assigns the PID.
+void set_pid(PCB_p pcb, unsigned int num) {
+    pcb->pid = num;
 }
 
-int set_creation(PCB_p pcb, time_t theTime) {
-  if (pcb == NULL) return -1;
-  pcb->creation = theTime;
-  return 0;
+unsigned int get_pid(PCB_p pcb) {
+    return pcb->pid;
 }
 
-time_t get_termination(PCB_p pcb) {
-  return pcb->termination;
+//Setters and getters for max_pc
+void set_max_pc(PCB_p pcb, unsigned int new_max_pc) {
+    pcb->max_pc = new_max_pc;
 }
 
-int set_termination(PCB_p pcb, time_t theTime) {
-  if (pcb == NULL) return -1;
-  pcb->termination = theTime;
-  return 0;
+unsigned int get_max_pc(PCB_p pcb) {
+    return pcb->max_pc;
+}
+
+//Returns time of creation of pcb.
+int get_creation_sec(PCB_p pcb) {
+    return (pcb->creation).tm_sec;
+}
+
+//Sets termination time of the pcb.
+void set_termination(PCB_p pcb) {
+    pcb->termination = *localtime(&(pcb->t));
+}
+
+//Getters and setters of terminate field.
+void set_terminate(PCB_p pcb, unsigned int new_terminate) {
+    pcb->terminate = new_terminate;
 }
 
 unsigned int get_terminate(PCB_p pcb) {
-  return pcb->terminate;
+    return pcb->terminate;
 }
 
-int set_terminate(PCB_p pcb, unsigned int theInt) {
-  if (pcb == NULL) return -1;
-  pcb->terminate = theInt;
-  return 0;
+//Getters and setter of term_count.
+void set_term_count(PCB_p pcb, unsigned int new_term_count) {
+    pcb->term_count = new_term_count;
 }
 
 unsigned int get_term_count(PCB_p pcb) {
-  return pcb->term_count;
+    return pcb->term_count;
 }
 
-int set_term_count(PCB_p pcb, unsigned int theInt) {
-  if (pcb == NULL) return -1;
-  pcb->term_count = theInt;
-  return 0;
+// Sets the state_type of the pcb passed in.
+void set_state(PCB_p pcb, enum state_type type) {
+    pcb->state = type;
 }
 
-int *  get_IO_1_TRAPS(PCB_p pcb) {
-  return pcb->IO_1_TRAPS;
+enum state_type get_state(PCB_p pcb) {
+    return pcb->state;
 }
 
-int set_IO_1_TRAPS(PCB_p pcb, int * theArr) {
-  if (pcb == NULL) return -1;
-  int i;
-  *(pcb->IO_1_TRAPS) = *theArr;
-  //for (i = 0; i < 4; i++) printf ("%d\n", pcb->IO_1_TRAPS[i]);
-  return 0;
+// Sets the priority of the pcb.
+void set_priority(PCB_p pcb, unsigned char priority) {
+    pcb->priority = priority;
 }
 
-int * get_IO_2_TRAPS (PCB_p pcb) {
-  return pcb->IO_2_TRAPS;
+unsigned char get_priority(PCB_p pcb) {
+    return pcb->priority;
 }
 
-int set_IO_2_TRAPS(PCB_p pcb, int * theArr ){
-  if (pcb == NULL) return -1;
-  *(pcb->IO_2_TRAPS) = *theArr;
-  return 0;
+// Returns the cycles the pcb has run.
+unsigned int get_cycles(PCB_p pcb) {
+    return pcb->cycles;
 }
 
-char * toString(PCB_p pcb) {
-  if (pcb == NULL) return NULL;
-  char *str = malloc(512);
-  memset(str, 0, 512);
-  CPU_context_p context = pcb->context;
-  char *contextstr = context_toString(context);
-  sprintf(str,"pid: 0x%X, state: 0x%X, parent: 0x%X, priority: 0x%X, mem: %s, size: 0x%X, channel_no: 0x%X, %s\n", pcb->pid & 0xffff, pcb->state & 0xffff, pcb->parent & 0xffff, pcb->priority & 0xf, pcb->mem, pcb->size & 0xffff, pcb->channel_no & 0xffff, contextstr);
-  free(contextstr);
-  return str;
-}
-char * context_toString(CPU_context_p context) {
-  if (context == NULL) return NULL;
-  char *str = malloc(512);
-  memset(str, 0, 512);
-  sprintf(str, "cpu_context:, pc: 0x%X, ir: 0x%X, psr: 0x%X, r0: 0x%X, r1: 0x%X, r2: 0x%X , r3: 0x%X , r4: 0x%X , r5: 0x%X , r6: 0x%X , r7: 0x%X, ", context->pc, context->ir, context->psr, context->r0, context->r1, context->r2, context->r3, context->r4, context->r5, context->r6, context->r7);
-  return str;
+// Sets the cycles this pcb has run.
+void set_cycles(PCB_p pcb, unsigned int newCycles) {
+    pcb->cycles = newCycles;
 }
 
-int setState(PCB_p pcb, enum state_type new_state) {
-  if (pcb == NULL) return -1;
-  pcb->state = new_state;
-  return 0;
+// Returns whether or no the pcb is privileged.
+int isPrivileged(PCB_p pcb) {
+    return pcb->privileged;
 }
 
-unsigned int getPC(PCB_p pcb) {
-  return pcb->context->pc;
+// Sets the pcb to privileged.
+void setPrivileged(PCB_p pcb) {
+    pcb->privileged = 1;
 }
 
-int setPC(PCB_p pcb, unsigned int the_pc) {
-  if (pcb == NULL || pcb->context == NULL) return -1;
-  pcb->context->pc = the_pc;
-  return 0;
+// returns the pcbs pc value.
+unsigned int get_pc(PCB_p pcb) {
+    if(pcb == NULL) return NULL;
+    if(pcb->context == NULL) return NULL;
+
+    return pcb->context->pc;
+}
+
+// Sets the pcbs pc value to the given pc.
+void set_pc(PCB_p pcb, unsigned int pc) {
+    pcb->context->pc = pc;
+}
+
+
+// Prints a string representation of the pcb passed in.
+void print_pcb_file(PCB_p pcb, FILE * fp) {
+    fprintf(fp, "Pid: %X, Priority: %X, State:%X ", get_pid(pcb), get_priority(pcb), pcb->state);
+    print_context(pcb->context,fp);
+}
+
+void print_pcb(PCB_p pcb){
+    printf("PCB: PID: %u, PRIORITY: %u, PC: %u,%u\n", pcb->pid, pcb->priority, pcb->context->pc, pcb->cycles);
+}
+
+void print_context(CPU_context_p context, FILE * fp) {
+    fprintf(fp, "Context Data: [pc: %u, ir: %u, psr: %u, r0: %u, r1: %u, r2: %u, r3: %u, r4: %u, r5: %u, r6: %u, r7: %u]\n",
+           context->pc, context->ir, context->psr, context->r0, context->r1, context->r2, context->r3,
+           context->r4, context->r5, context->r6, context->r7);
+}
+
+const char* get_state_name(enum state_type state) {
+    switch (state) {
+        case new: return "New";
+        case ready: return "Ready";
+        case running: return "Running";
+        case interrupted: return "Interrupted";
+        case waiting: return "Waiting";
+        case halted: return "Halted";
+    }
 }
