@@ -38,7 +38,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
     // Main Loop
     // One cycle is one quantum
     for( ; ; ) { // for spider
-        printf("Numb\n");
+        //printf("Numb\n");
         // stops making processes after 48 and if there are at least 4 Privileged pcbs
         if(processCounter < 400) {// && privilegedCount < 4) {
             createNewProcesses(newProcesses);
@@ -77,7 +77,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
             if (t == 1) {
                 printf("Timer\n");
 	       		pseudoISR(readyProcesses, runningProcess);
-		        print_priority_queue(*readyProcesses);
+		        //print_priority_queue(*readyProcesses);
 
 		        break;
 		    }
@@ -115,7 +115,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 }
                 print_fifo_queue(IO1Queue);
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
-                print_priority_queue(*readyProcesses);
+                //print_priority_queue(*readyProcesses);
                 break;
             } else if (iotrap == 2) {
                 printf("IO2\n");
@@ -127,7 +127,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 }
                 print_fifo_queue(IO2Queue);
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
-                print_priority_queue(*readyProcesses);
+                //print_priority_queue(*readyProcesses);
                 break;
             }
 
@@ -158,7 +158,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		// }
 		iteration ++;
 		//printf("ITERATION IS: %d\n", iteration);
-        if (iteration == 30000)  break;
+        if (iteration == 15000)  break;
     }
 }
 
@@ -169,6 +169,10 @@ int IOTimer(PriorityQ_p * readyProcesses) {
 	if (IO1time <= 0 && IO1Process != NULL) {
         printf(" I/O 1 complete\n");
         IO1time = ((rand() % 3) + 3) * getCyclesFromPriority(7) ;
+		if(fifo_is_empty(IO1Queue)) {
+			IO1Process = fifo_dequeue(IO1Queue);
+		}
+	
         // set_state(IO1Process, ready);
         // scheduler(readyProcesses, IO1Process, get_state(IO1Process));
         
