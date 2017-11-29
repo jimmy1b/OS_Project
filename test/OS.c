@@ -79,8 +79,8 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
             if(*runningProcess != NULL) {
                 set_pc(*runningProcess, get_pc(*runningProcess) + 1);
-            } else if (!pq_isEmpty(*readyProcesses)) {
-                *runningProcess = pq_dequeue(*readyProcesses);
+            // } else if (!pq_isEmpty(*readyProcesses)) {
+            //     //*runningProcess = pq_dequeue(*readyProcesses);
             }
 
 
@@ -94,7 +94,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
 	       		pseudoISR(readyProcesses, runningProcess);
 
-                startTimer(get_priority(*runningProcess));
+                //startTimer(get_priority(*runningProcess));
 		        //print_priority_queue(*readyProcesses);
 
 		        break;
@@ -108,9 +108,9 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    	//throw io 1 interrupt
                 set_state(IO1Process, ready);
                 scheduler(readyProcesses, &IO1Process, get_state(IO1Process));
-                if(!fifo_is_empty){
-                  IO1Process = fifo_dequeue(IO1Queue);
-                }
+                // if(!fifo_is_empty){
+                //   IO1Process = fifo_dequeue(IO1Queue);
+                // }
 
                 //print_fifo_queue(IO1Queue);
                 pseudoISR(readyProcesses, runningProcess);
@@ -198,7 +198,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		// }
 		iteration ++;
 		//printf("ITERATION IS: %d\n", iteration);
-        if (iteration == 15000 || pq_isEmpty(*readyProcesses) && processCounter >= PROCESSNUMBER){
+        if (iteration == 1000 && ((pq_isEmpty(*readyProcesses) && processCounter >= PROCESSNUMBER))){
           printf("we ended\n");
         break;
       }
@@ -212,9 +212,9 @@ int IOTimer(PriorityQ_p * readyProcesses) {
 	if (IO1time <= 0 && IO1Process != NULL) {
         printf(" I/O 1 complete\n");
         IO1time = ((rand() % 3) + 3) * getCyclesFromPriority(7) ;
-	if(!fifo_is_empty(IO1Queue)) {
-		IO1Process = fifo_dequeue(IO1Queue);
-		}
+      	if(!fifo_is_empty(IO1Queue)) {
+      		IO1Process = fifo_dequeue(IO1Queue);
+      		}
 
         // set_state(IO1Process, ready);
         // scheduler(readyProcesses, IO1Process, get_state(IO1Process));
@@ -409,6 +409,8 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
 
     // dequeue
     *runningProcess = pq_dequeue(*readyProcesses);
+    printf("%d\n", processCounter);
+    print_priority_queue(*readyProcesses);
 
     // update state to running
     // set state
