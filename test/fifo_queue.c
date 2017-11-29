@@ -40,8 +40,10 @@ FIFO_Queue_p create_fifo_queue() {
 /* Deconstructor */
 void destroy(FIFO_Queue_p fifo) {
     while(!fifo_is_empty(fifo)) {
-        fifo_dequeue(fifo);
+        PCB_p p = fifo_dequeue(fifo);
+	destroy_pcb(p);
     }
+ 
     free(fifo);
 }
 

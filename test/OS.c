@@ -355,9 +355,10 @@ int scheduler(PriorityQ_p * readyProcesses, PCB_p* runningProcess, int interrupt
             PCB_p dieingPCB = fifo_dequeue(dieingProcesses);
             destroy_pcb(dieingPCB);
         }
+        printf("Check69\n");
 
     }
-printf("Check69\n");
+
     // after some time S move all processes into Q0.
     if(quantumCounter == 0) {
         moveProcesses(readyProcesses);
