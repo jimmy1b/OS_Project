@@ -9,7 +9,7 @@ Alisher Baimenov
 
 #include <time.h>
 #include "OS.h"
-
+#define PROCESSNUMBER 400
 
 unsigned int sysStack;
 unsigned int currentPC;
@@ -40,7 +40,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
     for( ; ; ) { // for spider
         //printf("Numb\n");
         // stops making processes after 48 and if there are at least 4 Privileged pcbs
-        if(processCounter < 4000) {// && privilegedCount < 4) {
+        if(processCounter < PROCESSNUMBER) {// && privilegedCount < 4) {
             createNewProcesses(newProcesses);
             processCounter += fifo_size(newProcesses);
         }
@@ -147,21 +147,23 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
                 printf("Check22\n");
 
-                //print_priority_queue(*readyProcesses);
+                print_priority_queue(*readyProcesses);
                 break;
             } else if (iotrap == 2) {
                 printf("IO2\n");
                 set_state(*runningProcess, waiting);
-                if (IO2Process != NULL) {
-                    fifo_enqueue(IO2Queue, *runningProcess);
-                } else {
-                    IO2Process = *runningProcess;
-                }
+                fifo_enqueue(IO2Queue, *runningProcess);
+                // if (IO2Process != NULL) {
+                //     fifo_enqueue(IO2Queue, *runningProcess);
+                // } else {
+                IO2Process = fifo_dequeue(IO2Queue);
+                //}
                 //print_fifo_queue(IO2Queue);
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
                 printf("Check23\n");
 
-                //print_priority_queue(*readyProcesses);
+
+                print_priority_queue(*readyProcesses);
                 break;
             }
             if(*runningProcess != NULL) {
@@ -196,7 +198,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		// }
 		iteration ++;
 		//printf("ITERATION IS: %d\n", iteration);
-        if (iteration == 15000 || pq_isEmpty(*readyProcesses)){
+        if (iteration == 15000 || pq_isEmpty(*readyProcesses) && processCounter >= PROCESSNUMBER){
           printf("we ended\n");
         break;
       }
@@ -270,15 +272,15 @@ int IOTimer(PriorityQ_p * readyProcesses) {
 int pseudoISR(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     // Sets the status to interrupted.
     set_state(*runningProcess, interrupted);
-printf("Check6\n");
+//printf("Check6\n");
     sysStack = get_pc(*runningProcess);
-printf("Check50\n");
+//printf("Check50\n");
     // save pc to pcb
     set_pc(*runningProcess, sysStack);
-printf("Check51\n");
+//printf("Check51\n");
     // scheduler up call
     scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
-printf("Check52\n");
+//printf("Check52\n");
     // IRET (update current pc)
     //currentPC = sysStack;
 //printf("Check11\n");
@@ -310,6 +312,7 @@ int scheduler(PriorityQ_p * readyProcesses, PCB_p* runningProcess, int interrupt
         case interrupted:
         printf("Check1\n");
             dispatcher(readyProcesses, runningProcess);
+
             break;
         //case 2:
 
@@ -350,14 +353,14 @@ int scheduler(PriorityQ_p * readyProcesses, PCB_p* runningProcess, int interrupt
     // housekeeping if needed
     // If there are 4 terminated processes, clear them now.
     if(fifo_size(dieingProcesses) == 4) {
+       while(!fifo_is_empty(dieingProcesses)) {
+         printf("Check69\n");
+           PCB_p dieingPCB = fifo_dequeue(dieingProcesses);
+           destroy_pcb(dieingPCB);
+       }
 
-        while(!fifo_is_empty(dieingProcesses)) {
-            PCB_p dieingPCB = fifo_dequeue(dieingProcesses);
-            destroy_pcb(dieingPCB);
-        }
-        printf("Check69\n");
+   }
 
-    }
 
     // after some time S move all processes into Q0.
     if(quantumCounter == 0) {
