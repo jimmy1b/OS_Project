@@ -47,7 +47,7 @@ void destroy(FIFO_Queue_p fifo) {
 
 /* Functions */
 int fifo_is_empty(FIFO_Queue_p fifo) {
-    return fifo->count == 0;
+    return fifo->count <= 0;
 }
 
 void fifo_enqueue(FIFO_Queue_p fifo, PCB_p data) {
