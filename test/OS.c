@@ -137,7 +137,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
 		   // a = IOTimer(readyProcesses);
 
-		    if (a == 1) {
+		    if (a == 1 && IO1Process != NULL) {
 //printf("Check20\n");
 		    	//throw io 1 interrupt
                 set_state(IO1Process, ready);
@@ -153,7 +153,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    	break;
 		    }
 
-        if (b == 2) {
+        if (b == 1 && IO2Process != NULL) {
 //printf("Check21\n");
 		    	//throw io 2 interrupt
                 set_state(IO2Process, ready);
@@ -586,24 +586,27 @@ void *IO1Func(void *t) {
   struct timespec timing;
   //timer startup
   for(;;) {
-    pthread_mutex_lock(&Io1Mutex);
-    if(IO1time == 0) {
+    pthread_mutex_trylock(&Io1Mutex);
+    int ioval = IO1time;
+    pthread_mutex_unlock(&Io1Mutex);
+    if(ioval == 0) {
       int length = ((rand() * 3) + 2) * getCyclesFromPriority(thePriority) * NANO_SECOND_MULTIPLIER * 1000;
-      pthread_mutex_unlock(&Io1Mutex);// * NANO_SECOND_MULTIPLIER/ 10000);
+    // * NANO_SECOND_MULTIPLIER/ 10000);
 
       timing.tv_sec = 11;
       timing.tv_nsec = length;
+      nanosleep(&timing, NULL);
+      printf(" IO1\n");
+      pthread_mutex_trylock(&Io1Mutex);
+      IO1time = 1;
+
+      pthread_mutex_unlock(&Io1Mutex);
     }
 
 
 
 
-    nanosleep(&timing, NULL);
-    printf(" IO1\n");
-    pthread_mutex_trylock(&Io1Mutex);
-    IO1time = 1;
 
-    pthread_mutex_unlock(&Io1Mutex);
 
   }
 
@@ -613,21 +616,25 @@ void *IO2Func(void *t) {
   struct timespec timing;
   //timer startup
   for(;;) {
-    pthread_mutex_lock(&Io2Mutex);
-
-    int length = ((rand() * 3) + 2) * getCyclesFromPriority(thePriority) * NANO_SECOND_MULTIPLIER * 1000;
-    pthread_mutex_unlock(&Io2Mutex);// * NANO_SECOND_MULTIPLIER/ 10000);
-
-    timing.tv_sec = 5;
-    timing.tv_nsec = length;
-
-
-
-    nanosleep(&timing, NULL);
-    printf(" IO2\n");
     pthread_mutex_trylock(&Io2Mutex);
-    IO2time = 1;
-    pthread_mutex_unlock(&Io2Mutex);
+    int ioval = IO2time;
+    pthread_mutex_unlock(&Io2Mutex);// * NANO_SECOND_MULTIPLIER/ 10000);
+    if(ioval == 0) {
+      int length = ((rand() * 3) + 2) * getCyclesFromPriority(thePriority) * NANO_SECOND_MULTIPLIER * 1000;
+      timing.tv_sec = 5;
+      timing.tv_nsec = length;
+      nanosleep(&timing, NULL);
+      printf(" IO2\n");
+      pthread_mutex_trylock(&Io2Mutex);
+      IO2time = 1;
+      pthread_mutex_unlock(&Io2Mutex);
+    }
+
+
+
+
+
+
 
   }
 
@@ -640,6 +647,7 @@ int main() {
     srand(time(NULL));
     //IO and Timer threads
     pthread_t timerThread, IO1Thread, IO2Thread;
+
     //timerThread = pthread_create(timerThread, NULL, timer);'
     pthread_mutex_init(&timerMutex, NULL);
     pthread_mutex_init(&Io1Mutex, NULL);
