@@ -36,7 +36,7 @@ int scheduler(PriorityQ_p *, PCB_p* , int);
 int dispatcher(PriorityQ_p *, PCB_p*);
 
 // Creates a random number (0 - 5) of processes.
-int createNewProcesses(FIFO_Queue_p);
+int createNewProcesses(FIFO_Queue_p, int);
 
 // Moves proccesses into the highest priority queue.
 void moveProcesses (PriorityQ_p *);

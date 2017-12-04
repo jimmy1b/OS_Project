@@ -52,7 +52,7 @@ struct PCB_s {
     CPU_context_p context;
     unsigned int cycles;
     _Bool privileged;
-
+    //fields added in problem 4.
     unsigned int max_pc;
     time_t t;
     struct tm creation;
@@ -61,6 +61,9 @@ struct PCB_s {
     unsigned int term_count;
     unsigned int io_1_traps[4];
     unsigned int io_2_traps[4];
+    //fields added in final project.
+    enum pair_type pair;
+    //enum pcb_type type;
 } PCB_s;
 
 /* constructor */
@@ -127,6 +130,53 @@ PCB_p create_pcb() {
     }
     return pcb;
 }
+PCB_p create_noio_pcb() {
+  PCB_p pcb = (PCB_p) malloc(sizeof(PCB_s));
+  pcb->context = (CPU_context_p) malloc(sizeof(CPU_context_s));
+  if (!pcb) {
+      return NULL;
+  } else {
+      pcb->context->pc = 0;
+      pcb->context->ir = 0;
+      pcb->context->psr = 0;
+      pcb->context->r0 = 0;
+      pcb->context->r1 = 0;
+      pcb->context->r2 = 0;
+      pcb->context->r3 = 0;
+      pcb->context->r4 = 0;
+      pcb->context->r5 = 0;
+      pcb->context->r6 = 0;
+      pcb->context->r7 = 0;
+
+      pcb->pid = currentpid++;
+      pcb->state = new;
+      pcb->parent = 0;
+      pcb->priority = 0;
+      pcb->mem = 0;
+      pcb->size = 0;
+      pcb->channel_no = 0;
+      pcb->cycles = 0;
+      pcb->privileged = 0;
+      //pcb->max_pc = 2345;
+      pcb->t = time(NULL);
+      pcb->creation = *localtime(&(pcb->t));
+      //pcb->termination = ???
+      //pcb->terminate = 2;
+      pcb->term_count = 0;
+      srand(time(NULL));
+      pcb->max_pc = rand() % 4000;
+      pcb->terminate = rand() % 10;
+      int i;
+      for (i = 0; i < 4; i++) {
+          int val = pcb->max_pc + 1;
+          pcb->io_1_traps[i] = val;
+          pcb->io_2_traps[i] = val;
+
+
+      }
+  }
+  return pcb;
+}
 
 /* deconstructor */
 // Deallocates the memory for the pcb passed in.
@@ -169,6 +219,15 @@ void set_pid(PCB_p pcb, unsigned int num) {
 
 unsigned int get_pid(PCB_p pcb) {
     return pcb->pid;
+}
+
+//Pair type setter/getters.
+void set_pair(PCB_p pcb, enum pair_type new_pair) {
+    pcb->pair = new_pair;
+}
+
+enum pair_type get_pair(PCB_p pcb) {
+    return pcb->pair;
 }
 
 //Setters and getters for max_pc
@@ -285,4 +344,4 @@ const char* get_state_name(enum state_type state) {
         case waiting: return "Waiting";
         case halted: return "Halted";
     }
-}
+  }

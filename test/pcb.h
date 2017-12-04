@@ -25,9 +25,14 @@ typedef struct PCB_s * PCB_p;
 
 enum state_type {new, ready, running, interrupted, waiting, halted};
 
+enum pair_type {producer, consumer};
+
 /* constructor */
 // Creates a pcb with the PCB pointer and the CPU_context pointer
 PCB_p create_pcb();
+/* constructor */
+// Creates a pcb with the PCB pointer and the CPU_context pointer that has no IO information
+PCB_p create_noio_pcb();
 
 /* deconstructor */
 // Deallocates the memory for the pcb passed in.
