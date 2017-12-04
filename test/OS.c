@@ -9,6 +9,7 @@ Alisher Baimenov
 
 #include <time.h>
 #include <pthread.h>
+#include "mutex_ds.h"
 #include "OS.h"
 #define PROCESSNUMBER 45
 #define NOIOPROCESSNUMBER 20
@@ -37,6 +38,7 @@ pthread_mutex_t priorityMutex;;
 pthread_mutex_t timerMutex;
 pthread_mutex_t Io1Mutex;
 pthread_mutex_t Io2Mutex;
+mutex_ds_p runningMutex;
 
 // The os simulator, runs the main loop.
 int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
@@ -126,7 +128,14 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    }
 
             //IO timer int check
-		    a = IOTimer(readyProcesses);
+        pthread_mutex_trylock(&Io1Mutex);
+        a = IO1time;
+        pthread_mutex_unlock(&Io1Mutex);
+        pthread_mutex_trylock(&Io2Mutex);
+        int b = IO2time;
+        pthread_mutex_unlock(&Io2Mutex);
+
+		   // a = IOTimer(readyProcesses);
 
 		    if (a == 1) {
 //printf("Check20\n");
@@ -142,7 +151,9 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 //printf("Check5\n");
 
 		    	break;
-		    } else if (a == 2) {
+		    }
+
+        if (b == 2) {
 //printf("Check21\n");
 		    	//throw io 2 interrupt
                 set_state(IO2Process, ready);
@@ -580,7 +591,7 @@ void *IO1Func(void *t) {
       int length = ((rand() * 3) + 2) * getCyclesFromPriority(thePriority) * NANO_SECOND_MULTIPLIER * 1000;
       pthread_mutex_unlock(&Io1Mutex);// * NANO_SECOND_MULTIPLIER/ 10000);
 
-      timing.tv_sec = 5;
+      timing.tv_sec = 11;
       timing.tv_nsec = length;
     }
 
