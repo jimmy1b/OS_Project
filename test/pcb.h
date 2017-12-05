@@ -33,9 +33,6 @@ PCB_p create_pcb();
 /* constructor */
 // Creates a pcb with the PCB pointer and the CPU_context pointer that has no IO information
 PCB_p create_noio_pcb();
-PCB_p create_prod_pcb(int res);
-PCB_p create_cons_pcb(int res);
-PCB_p create_mutual_pcb(int res);
 
 /* deconstructor */
 // Deallocates the memory for the pcb passed in.
@@ -112,9 +109,5 @@ void set_term_count(PCB_p pcb, unsigned int new_term_count);
 unsigned int get_term_count(PCB_p pcb);
 
 const char* get_state_name(enum state_type state);
-
-void set_pcb_resource(PCB_p pcb, int res);
-
-int get_pcb_resource(PCB_p pcb);
 
 #endif
