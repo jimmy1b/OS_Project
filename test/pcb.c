@@ -224,7 +224,7 @@ unsigned int get_pid(PCB_p pcb) {
 }
 
 //type type setter/getters.
-void set_type(PCB_p pcb, enum type_type new_type) {
+void set_type(PCB_p pcb, enum pcb_type new_type) {
     pcb->type = new_type;
 }
 
@@ -317,11 +317,12 @@ unsigned int get_pc(PCB_p pcb) {
 
 // Sets the pcbs pc value to the given pc.
 void set_pc(PCB_p pcb, unsigned int pc) {
-    if(pc > pcb->max_pc && pcb->term_count != 0) {
+    int maximum = pcb->max_pc;
+    if(pc > maximum && pcb->terminate != 0) {
       pcb->context->pc = 0;
       pcb->cycles += 1;
       if (pcb->cycles > pcb->term_count) {
-        set_terminate(pcb, 1);
+
       }
     }
     pcb->context->pc = pc;

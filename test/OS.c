@@ -10,7 +10,7 @@ Alisher Baimenov
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
-#include "mutex_ds.h"
+#include "Resource.h"
 #include "OS.h"
 #define PROCESSNUMBER 45
 #define NOIOPROCESSNUMBER 20
@@ -40,7 +40,7 @@ pthread_mutex_t priorityMutex;
 pthread_mutex_t timerMutex;
 pthread_mutex_t Io1Mutex;
 pthread_mutex_t Io2Mutex;
-mutex_ds_p runningMutex;
+//Resource_s runningMutex;
 
 // The os simulator, runs the main loop.
 int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
@@ -91,6 +91,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
             if(*runningProcess != NULL) {
                 set_pc(*runningProcess, get_pc(*runningProcess) + 1);
+                printf("%d\n", get_pc(*runningProcess));
             // } else if (!pq_isEmpty(*readyProcesses)) {
             //     //*runningProcess = pq_dequeue(*readyProcesses);
             }
@@ -111,7 +112,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
                 pthread_mutex_unlock(&timerMutex);
             printf("%d\nmax pc : %d", get_pc(*runningProcess), get_max_pc(*runningProcess));
-            
+
 	       		pseudoISR(readyProcesses, runningProcess);
 
                 //startTimer(get_priority(*runningProcess));
@@ -340,7 +341,7 @@ int pseudoISR(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     sysStack = get_pc(*runningProcess);
 //printf("Check50\n");
     // save pc to pcb
-    set_pc(*runningProcess, sysStack);
+    //set_pc(*runningProcess, sysStack);
 //printf("Check51\n");
     // scheduler up call
 
