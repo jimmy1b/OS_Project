@@ -128,12 +128,12 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    }
 
             //IO timer int check
-        pthread_mutex_trylock(&Io1Mutex);
-        a = IO1time;
-        pthread_mutex_unlock(&Io1Mutex);
-        pthread_mutex_trylock(&Io2Mutex);
-        b = IO2time;
-        pthread_mutex_unlock(&Io2Mutex);
+            pthread_mutex_trylock(&Io1Mutex);
+            a = IO1time;
+            pthread_mutex_unlock(&Io1Mutex);
+            pthread_mutex_trylock(&Io2Mutex);
+            b = IO2time;
+            pthread_mutex_unlock(&Io2Mutex);
 
 		   // a = IOTimer
 		    if (a == 1 && IO1Process != NULL) {
@@ -152,7 +152,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    	break;
 		    }
 
-        if (b == 1 && IO2Process != NULL) {
+            if (b == 1 && IO2Process != NULL) {
 //printf("Check21\n");
 		    	//throw io 2 interrupt
                 printf("yeayea14\n");
@@ -160,7 +160,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 set_state(IO2Process, ready);
                 scheduler(readyProcesses, &IO2Process, get_state(IO2Process));
                 if(!fifo_is_empty){
-                  IO2Process = fifo_dequeue(IO2Queue);
+                    IO2Process = fifo_dequeue(IO2Queue);
                 }
                 print_fifo_queue(IO2Queue);
                 pseudoISR(readyProcesses, runningProcess);
@@ -465,7 +465,7 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     dispatchCount++;
     //printf("Check3\n");
     // update context if the pcb was not halted.
-    if(get_state(*runningProcess) != halted &&
+    if(*runningProcess != NULL && get_state(*runningProcess) != halted &&
         get_state(*runningProcess) != waiting) {
         //printf("Check3\n");
         // update the pc counter.
@@ -505,19 +505,23 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     pthread_mutex_lock(&priorityMutex);
     thePriority = get_priority(*runningProcess);
     pthread_mutex_unlock(&priorityMutex);
+
   //  printf("%d\n", processCounter);
     //print_priority_queue(*readyProcesses);
 
     // update state to running
     // set state
     if(*runningProcess != NULL) {
+
         set_state(*runningProcess, running);
         //printf("Check3\n");
         sysStack = get_pc(*runningProcess);
+        return SUCCESSFUL;
+    } else {
+        return FAILED
     }
     //printf("Check4\n");
 
-    return SUCCESSFUL;
 }
 
 void moveProcesses (PriorityQ_p * readyProcesses) {
