@@ -324,8 +324,10 @@ void set_pc(PCB_p pcb, unsigned int pc) {
       if (pcb->cycles > pcb->term_count) {
 
       }
+    } else {
+      pcb->context->pc = pc;
     }
-    pcb->context->pc = pc;
+
 
 }
 
