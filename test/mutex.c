@@ -17,7 +17,7 @@ mutex_p create_mutex() {
     if (!mutex) {
         return NULL;
     } else {
-        //mutex->pcb = create_pcb();
+        mutex->pcb = NULL;
         mutex->waiting_q = create_fifo_queue();
         mutex->state = unlocked;
 

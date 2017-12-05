@@ -1,36 +1,37 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "mutex.h"
-#include "mutex_ds.h"
+#include "Resource.h"
 
-struct mutex_ds_s {
+struct Resource_s {
     mutex_p mutex;
-    PCB_p pcb;
-    int data;
+     unsigned int data;
 
-} mutex_ds_s;
+} Resource_s;
 
-mutex_ds_p create_mutex_ds() {
-    mutex_ds_p mdp = (mutex_ds_p) malloc(sizeof(mutex_ds_s));
-    if (!mdp) {
+Resource_p create_resource() {
+    Resource_p res = (resource_p) malloc(sizeof(Resource_s));
+    if (!res) {
         return NULL;
     } else {
-        mdp->mutex = create_mutex();
-        mdp->pcb = create_pcb();
-        mdp->data = 0;
-        return mdp;
+        res->mutex = create_mutex();
+        res->data = 0;
+        return res;
     }
 } 
 
-int get(mutex_ds_p mdp) {
-    lock(mdp->mutex, mdp->pcb);
-    int result = mdp->data;
-    unlock(mdp->mutex);
-    return result;
+int get(Resource_p res, PCB_p pcb) {
+    if (lock(res->mutex, pcb) == 1) {
+        int result = res->data;
+        unlock(res->mutex);
+        return result;
+    } else {
+        return -1
+    }
 }
 
-int put (mutex_ds_p mdp, int new_data) {
-    lock(mdp->mutex, mdp->pcb);
-    mdp->data = new_data;
-    unlock(mdp->mutex);
+int put (Resource_p res, PCB_p pcb, int new_data) {
+    lock(res->mutex, pcb);
+    res->data = new_data;
+    unlock(res->mutex);
 }

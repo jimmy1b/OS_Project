@@ -62,7 +62,7 @@ struct PCB_s {
     unsigned int io_1_traps[4];
     unsigned int io_2_traps[4];
     //fields added in final project.
-    enum pair_type pair;
+    enum pcb_type type;
     //enum pcb_type type;
 } PCB_s;
 
@@ -95,6 +95,7 @@ PCB_p create_pcb() {
         pcb->channel_no = 0;
         pcb->cycles = 0;
         pcb->privileged = 0;
+        pcb->type = normal;
         //pcb->max_pc = 2345;
         pcb->t = time(NULL);
         pcb->creation = *localtime(&(pcb->t));
@@ -157,6 +158,7 @@ PCB_p create_noio_pcb() {
       pcb->channel_no = 0;
       pcb->cycles = 0;
       pcb->privileged = 0;
+      pcb->type = noio;
       //pcb->max_pc = 2345;
       pcb->t = time(NULL);
       pcb->creation = *localtime(&(pcb->t));
@@ -221,13 +223,13 @@ unsigned int get_pid(PCB_p pcb) {
     return pcb->pid;
 }
 
-//Pair type setter/getters.
-void set_pair(PCB_p pcb, enum pair_type new_pair) {
-    pcb->pair = new_pair;
+//type type setter/getters.
+void set_type(PCB_p pcb, enum type_type new_type) {
+    pcb->type = new_type;
 }
 
-enum pair_type get_pair(PCB_p pcb) {
-    return pcb->pair;
+enum pcb_type get_type(PCB_p pcb) {
+    return pcb->type;
 }
 
 //Setters and getters for max_pc
