@@ -135,8 +135,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
         int b = IO2time;
         pthread_mutex_unlock(&Io2Mutex);
 
-		   // a = IOTimer(readyProcesses);
-
+		   // a = IOTimer
 		    if (a == 1 && IO1Process != NULL) {
 //printf("Check20\n");
 		    	//throw io 1 interrupt
@@ -156,6 +155,8 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
         if (b == 1 && IO2Process != NULL) {
 //printf("Check21\n");
 		    	//throw io 2 interrupt
+                printf("yeayea14\n");
+                print_fifo_queue(IO2Queue);
                 set_state(IO2Process, ready);
                 scheduler(readyProcesses, &IO2Process, get_state(IO2Process));
                 if(!fifo_is_empty){
@@ -169,7 +170,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    }
 
             //IO Trap
-            int iotrap = 0;// io_contains_pc(*runningProcess);
+            int iotrap = io_contains_pc(*runningProcess);
             if (iotrap == 1) {
                 printf("IO1\n");
                 set_state(*runningProcess, waiting);
