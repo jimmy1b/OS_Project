@@ -75,7 +75,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
         //sysStack = currentPC;
 //printf("Check5\n");
 
-        quantumCounter--;
+
 
 
 
@@ -91,7 +91,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
             if(*runningProcess != NULL) {
                 set_pc(*runningProcess, get_pc(*runningProcess) + 1);
-                printf("%d\n", get_pc(*runningProcess));
+                //printf("%d\n", get_pc(*runningProcess));
             // } else if (!pq_isEmpty(*readyProcesses)) {
             //     //*runningProcess = pq_dequeue(*readyProcesses);
             }
@@ -111,13 +111,14 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 theTime = 0;
 
                 pthread_mutex_unlock(&timerMutex);
-            printf("%d\nmax pc : %d", get_pc(*runningProcess), get_max_pc(*runningProcess));
+            printf("%d\nmax pc : %d\n", get_pc(*runningProcess), get_max_pc(*runningProcess));
+            print_priority_queue(*readyProcesses);
 
 	       		pseudoISR(readyProcesses, runningProcess);
 
                 //startTimer(get_priority(*runningProcess));
 
-		        //print_priority_queue(*readyProcesses);
+
 
 
 		        break;
@@ -202,21 +203,21 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 //print_priority_queue(*readyProcesses);
                 break;
             }
-          /*  if(*runningProcess != NULL) {
+           if(*runningProcess != NULL) {
 
-                if (get_terminate(*runningProcess) > 0 && get_pc(*runningProcess) >= get_max_pc(*runningProcess)) {
-                    //printf("term\n");
-                    set_term_count(*runningProcess, get_term_count(*runningProcess) + 1);
-                    set_pc(*runningProcess, 0);
+                // if (get_terminate(*runningProcess) > 0 && get_pc(*runningProcess) >= get_max_pc(*runningProcess)) {
+                //     //printf("term\n");
+                //     set_term_count(*runningProcess, get_term_count(*runningProcess) + 1);
+                //     set_pc(*runningProcess, 0);
                     if (get_term_count(*runningProcess) > get_terminate(*runningProcess)) {
                         set_state(*runningProcess, halted);
                         scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
     //printf("Check10\n");
 
                         break;
-                    }
+
                 }
-            }*/
+            }
 
         }
 
@@ -232,6 +233,8 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		// 		}
 		// 	}
 		// }
+    quantumCounter--;
+    printf("\nQuantum counter%d\n", quantumCounter);
 		iteration ++;
 		//printf("ITERATION IS: %d\n", iteration);
         if (iteration == 1000 && ((pq_isEmpty(*readyProcesses) && processCounter >= PROCESSNUMBER))){
@@ -443,7 +446,7 @@ int scheduler(PriorityQ_p * readyProcesses, PCB_p* runningProcess, int interrupt
 
 
     // after some time S move all processes into Q0.
-    if(quantumCounter == 0) {
+    if(quantumCounter <= 0) {
         moveProcesses(readyProcesses);
         quantumCounter = quantum;
     }
@@ -515,15 +518,21 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
 }
 
 void moveProcesses (PriorityQ_p * readyProcesses) {
-    PriorityQ_p tempQueue = create_pq();
+    FIFO_Queue_p save = create_fifo_queue();
+
+    //PriorityQ_p tempQueue = create_pq();
     while(!pq_isEmpty(*readyProcesses)) {
-
         PCB_p tempPCB = pq_dequeue(*readyProcesses);
-        set_priority(tempPCB, 0);
-        pq_enqueue(tempQueue, tempPCB);
-    }
 
-    *readyProcesses = tempQueue;
+        set_priority(tempPCB, 0);
+        fifo_enqueue(save, tempPCB);
+    }
+    while(!fifo_is_empty(save)) {
+        PCB_p tempPCB = fifo_dequeue(save);
+        pq_enqueue(*readyProcesses, tempPCB);
+    }
+    destroy(save);
+
 }
 
 // Creates a random number of processes to be added to the
@@ -560,14 +569,14 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
 
 // Returns the number of cycles that each queue uses.
 unsigned int getCyclesFromPriority(unsigned int priority) {
-    return 500 * (priority + 1);
+    return 8 * (priority + 1);
 }
 void *timerFunc(void *t) {
   //timer startup
   for(;;) {
     pthread_mutex_lock(&priorityMutex);
 
-    int length = getCyclesFromPriority(thePriority)* NANO_SECOND_MULTIPLIER;
+    int length = getCyclesFromPriority(thePriority)* NANO_SECOND_MULTIPLIER * 1000;
     pthread_mutex_unlock(&priorityMutex);// * NANO_SECOND_MULTIPLIER/ 10000);
     struct timespec timing;
     timing.tv_sec = 0;
@@ -576,8 +585,8 @@ void *timerFunc(void *t) {
 
 
     nanosleep(&timing, NULL);
-    sleep(1);
-    printf(" TIMER\n");
+
+    //printf(" TIMER\n");
     pthread_mutex_trylock(&timerMutex);
     theTime = 1;
     pthread_mutex_unlock(&timerMutex);
