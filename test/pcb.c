@@ -315,7 +315,15 @@ unsigned int get_pc(PCB_p pcb) {
 
 // Sets the pcbs pc value to the given pc.
 void set_pc(PCB_p pcb, unsigned int pc) {
+    if(pc > pcb->max_pc && pcb->term_count != 0) {
+      pcb->context->pc = 0;
+      pcb->cycles += 1;
+      if (pcb->cycles > pcb->term_count) {
+        set_terminate(pcb, 1);
+      }
+    }
     pcb->context->pc = pc;
+
 }
 
 

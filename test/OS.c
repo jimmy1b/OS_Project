@@ -25,7 +25,7 @@ unsigned int quantum;
 unsigned int quantumCounter;
 unsigned int processCounter;
 unsigned int noIOCounter;
-int thePriority, theTime, IO1time, IO2time;
+int thePriority, theTime, IO1time, IO2time, IO1priority, IO2Priority;
 
 PCB_p IO1Process;
 PCB_p IO2Process;
@@ -35,7 +35,8 @@ FIFO_Queue_p IO2Queue;
 FIFO_Queue_p newProcesses;
 FIFO_Queue_p newNoIos;
 FIFO_Queue_p dieingProcesses;
-pthread_mutex_t priorityMutex;;
+pthread_mutex_t priorityMutex;
+
 pthread_mutex_t timerMutex;
 pthread_mutex_t Io1Mutex;
 pthread_mutex_t Io2Mutex;
@@ -47,7 +48,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
     srand(time(NULL));
 
     int iteration = 1;
-    int t, a, i, j;
+    int t, a, b, i, j;
     //startTimer(get_priority(*readyProcesses));
     // Main Loop
     // One cycle is one quantum
@@ -64,15 +65,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
           noIOCounter += fifo_size(newNoIos);
         }
 
-        // set new processes to ready
-        // while(!fifo_is_empty(newProcesses)) {
-        //     // dequeue and print next pcb
-        //     PCB_p pcb = fifo_dequeue(newProcesses);
-        //     set_state(pcb, ready);
 
-        //     // enqueue
-        //     pq_enqueue(*readyProcesses, pcb);
-        // }
 
 
         //Simulate Process Running
@@ -117,7 +110,8 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 theTime = 0;
 
                 pthread_mutex_unlock(&timerMutex);
-
+            printf("%d\nmax pc : %d", get_pc(*runningProcess), get_max_pc(*runningProcess));
+            
 	       		pseudoISR(readyProcesses, runningProcess);
 
                 //startTimer(get_priority(*runningProcess));
@@ -133,7 +127,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
         a = IO1time;
         pthread_mutex_unlock(&Io1Mutex);
         pthread_mutex_trylock(&Io2Mutex);
-        int b = IO2time;
+        b = IO2time;
         pthread_mutex_unlock(&Io2Mutex);
 
 		   // a = IOTimer
@@ -146,7 +140,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 //   IO1Process = fifo_dequeue(IO1Queue);
                 // }
 
-                //print_fifo_queue(IO1Queue);
+                print_fifo_queue(IO1Queue);
                 pseudoISR(readyProcesses, runningProcess);
 //printf("Check5\n");
 
@@ -163,7 +157,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 if(!fifo_is_empty){
                   IO2Process = fifo_dequeue(IO2Queue);
                 }
-                //print_fifo_queue(IO2Queue);
+                print_fifo_queue(IO2Queue);
                 pseudoISR(readyProcesses, runningProcess);
 //printf("Check6\n");
 
@@ -171,9 +165,9 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    }
 
             //IO Trap
-            int iotrap = io_contains_pc(*runningProcess);
-            assert(IO1Process != NULL);
-            assert(IO2Process != NULL);
+            int iotrap = 3;//io_contains_pc(*runningProcess);
+            //assert(IO1Process != NULL);
+            //assert(IO2Process != NULL);
             if (iotrap == 1) {
                 printf("IO1\n");
                 set_state(*runningProcess, waiting);
@@ -184,7 +178,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                     //remember
                     IO1Process = *runningProcess;
                 }
-                //print_fifo_queue(IO1Queue);
+                print_fifo_queue(IO1Queue);
 
                 printf("Check22\n");
 
@@ -193,13 +187,13 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
             } else if (iotrap == 2) {
                 //printf("IO2\n");
                 set_state(*runningProcess, waiting);
-                fifo_enqueue(IO2Queue, *runningProcess);
-                // if (IO2Process != NULL) {
-                //     fifo_enqueue(IO2Queue, *runningProcess);
-                // } else {
-                //IO2Process = fifo_dequeue(IO2Queue);
-                //}
-                //print_fifo_queue(IO2Queue);
+
+                if (IO2Process != NULL) {
+                    fifo_enqueue(IO2Queue, *runningProcess);
+                } else {
+                IO2Process = fifo_dequeue(IO2Queue);
+                }
+                print_fifo_queue(IO2Queue);
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
                 printf("Check23\n");
 
@@ -473,9 +467,10 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
         set_state(*runningProcess, ready);
 
 
-        // Increments the cycles of the process.
+        // Increments the cyassertcles of the process.
         //unsigned int cycles = get_cycles(*runningProcess);
-        unsigned char priority = get_priority(*runningProcess);
+
+        int priority = get_priority(*runningProcess);
         //printf("\n%d", priority);
 
         //if (cycles % getCyclesFromPriority(priority) == 0) {
@@ -494,6 +489,8 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
         pq_enqueue(*readyProcesses, *runningProcess);
 
     }
+    //handle IO
+
     //printf("Check3\n");
 
     // dequeue
@@ -562,7 +559,7 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
 
 // Returns the number of cycles that each queue uses.
 unsigned int getCyclesFromPriority(unsigned int priority) {
-    return 20 * (priority + 1);
+    return 500 * (priority + 1);
 }
 void *timerFunc(void *t) {
   //timer startup
@@ -578,6 +575,7 @@ void *timerFunc(void *t) {
 
 
     nanosleep(&timing, NULL);
+    sleep(1);
     printf(" TIMER\n");
     pthread_mutex_trylock(&timerMutex);
     theTime = 1;
@@ -588,19 +586,22 @@ void *timerFunc(void *t) {
 
 }
 void *IO1Func(void *t) {
+  sleep(30);
   struct timespec timing;
   //timer startup
   for(;;) {
     pthread_mutex_trylock(&Io1Mutex);
     int ioval = IO1time;
+
     pthread_mutex_unlock(&Io1Mutex);
-    if(ioval == 0) {
-      int length = ((rand() * 3) + 2) * getCyclesFromPriority(thePriority) * NANO_SECOND_MULTIPLIER * 1000;
+    if(ioval == 0 ) {
+      int length = ((rand() * 3) + 2) * 3 * getCyclesFromPriority(7) * NANO_SECOND_MULTIPLIER * 1000;
     // * NANO_SECOND_MULTIPLIER/ 10000);
 
       timing.tv_sec = 11;
       timing.tv_nsec = length;
       nanosleep(&timing, NULL);
+
       printf(" IO1\n");
       pthread_mutex_trylock(&Io1Mutex);
       IO1time = 1;
@@ -618,6 +619,7 @@ void *IO1Func(void *t) {
 
 }
 void *IO2Func(void *t) {
+  sleep(30);
   struct timespec timing;
   //timer startup
   for(;;) {
@@ -625,7 +627,7 @@ void *IO2Func(void *t) {
     int ioval = IO2time;
     pthread_mutex_unlock(&Io2Mutex);// * NANO_SECOND_MULTIPLIER/ 10000);
     if(ioval == 0) {
-      int length = ((rand() * 3) + 2) * getCyclesFromPriority(thePriority) * NANO_SECOND_MULTIPLIER * 1000;
+      int length = ((rand() * 3) + 2) * 3 * getCyclesFromPriority(7) * NANO_SECOND_MULTIPLIER;
       timing.tv_sec = 5;
       timing.tv_nsec = length;
       nanosleep(&timing, NULL);
@@ -673,8 +675,8 @@ int main() {
 
     //FIFO_Queue_p dieingProcesses = create_fifo_queue();
     dieingProcesses = create_fifo_queue();
-    PCB_p IO1Process = create_pcb();
-    PCB_p IO2Process = create_pcb();
+    // PCB_p IO1Process = create_pcb();
+    // PCB_p IO2Process = create_pcb();
     IO1Queue = create_fifo_queue();
     IO2Queue = create_fifo_queue();
     // set a process to running
@@ -690,9 +692,9 @@ int main() {
     quantumCounter = quantum;
     processCounter = 1;
     //create threads
-    int b = pthread_create(&timerThread, NULL, timerFunc, (void*)runningProcess);
-    int c = pthread_create(&IO1Thread, NULL, IO1Func, (void*)runningProcess);
-    int d = pthread_create(&IO2Thread, NULL, IO2Func, (void*)runningProcess);
+    int timerthreadcreated = pthread_create(&timerThread, NULL, timerFunc, (void*)runningProcess);
+    int IO1threadcreated = pthread_create(&IO1Thread, NULL, IO1Func, (void*)runningProcess);
+    int IO2threadcreated = pthread_create(&IO2Thread, NULL, IO2Func, (void*)runningProcess);
     // main loop
     OS_Simulator(&readyProcesses, &runningProcess);
 
