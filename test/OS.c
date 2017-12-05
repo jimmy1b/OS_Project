@@ -9,6 +9,7 @@ Alisher Baimenov
 
 #include <time.h>
 #include <pthread.h>
+#include <assert.h>
 #include "mutex_ds.h"
 #include "OS.h"
 #define PROCESSNUMBER 45
@@ -171,9 +172,12 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
             //IO Trap
             int iotrap = io_contains_pc(*runningProcess);
+            assert(IO1Process != NULL);
+            assert(IO2Process != NULL);
             if (iotrap == 1) {
                 printf("IO1\n");
                 set_state(*runningProcess, waiting);
+                scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
                 if (IO1Process != NULL) {
                     fifo_enqueue(IO1Queue, *runningProcess);
                 } else {
@@ -181,19 +185,19 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                     IO1Process = *runningProcess;
                 }
                 //print_fifo_queue(IO1Queue);
-                scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
+
                 printf("Check22\n");
 
                 //print_priority_queue(*readyProcesses);
                 break;
             } else if (iotrap == 2) {
-                printf("IO2\n");
+                //printf("IO2\n");
                 set_state(*runningProcess, waiting);
                 fifo_enqueue(IO2Queue, *runningProcess);
                 // if (IO2Process != NULL) {
                 //     fifo_enqueue(IO2Queue, *runningProcess);
                 // } else {
-                IO2Process = fifo_dequeue(IO2Queue);
+                //IO2Process = fifo_dequeue(IO2Queue);
                 //}
                 //print_fifo_queue(IO2Queue);
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
