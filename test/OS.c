@@ -40,7 +40,10 @@ pthread_mutex_t priorityMutex;
 pthread_mutex_t timerMutex;
 pthread_mutex_t Io1Mutex;
 pthread_mutex_t Io2Mutex;
-//Resource_s runningMutex;
+
+Resource_p prodConR[10];
+Resource_p mutualR1[10];
+Resource_p mutualR2[10];
 
 // The os simulator, runs the main loop.
 int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
@@ -531,8 +534,8 @@ void moveProcesses (PriorityQ_p * readyProcesses) {
 int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
     int i;
     if (type == 0) {//create normal processes
-      for(i = 0; i < rand() % 5; i++) {
-          PCB_p pcb = create_pcb();
+		for(i = 0; i < rand() % 5; i++) {
+			PCB_p pcb = create_pcb();
 
           // 20% chance that the pcb will become privileged.
           /*if(rand() % 100 < 20 ) {//&& privilegedCount < 4)  {
@@ -540,11 +543,11 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
               privilegedPCBs[privilegedCount] = pcb;
               privilegedCount++;
           })*/
-          fifo_enqueue(newProcesses, pcb);
+			fifo_enqueue(newProcesses, pcb);
         }
     } else if (type == 1) {
-      for(i = 0; i < rand() % 5; i++) {
-          PCB_p pcb = create_noio_pcb();
+		for(i = 0; i < rand() % 5; i++) {
+			PCB_p pcb = create_noio_pcb();
 
 
           // 20% chance that the pcb will become privileged.
@@ -554,9 +557,35 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
               privilegedCount++;
           })*/
           fifo_enqueue(newProcesses, pcb);
-        }
-      }
-    }
+		}
+		// producer, consumer pairs
+	} else if (type == 2) {
+		for(i = 0; i < 10; i++) {
+			PCB_p pcb1 = create_prod_pcb(i);
+			fifo_enqueue(newProcesses, pcb1);
+			PCB_p pcb2 = create_cons_pcb(i);
+			fifo_enqueue(newProcesses, pcb2);
+
+
+          // 20% chance that the pcb will become privileged.
+          /*if(rand() % 100 < 20 ) {//&& privilegedCount < 4)  {
+              setPrivileged(pcb);
+              privilegedPCBs[privilegedCount] = pcb;
+              privilegedCount++;
+          })*/
+          
+		}
+
+		// mutual resource pairs
+	} else if (type == 3) {
+		for(i = 0; i < 10; i++) {
+			PCB_p pcb1 = create_mutual_pcb(i);
+			fifo_enqueue(newProcesses, pcb1);
+			PCB_p pcb2 = create_mutual_pcb(i);
+			fifo_enqueue(newProcesses, pcb2);
+		}
+	}
+}
 
 // Returns the number of cycles that each queue uses.
 unsigned int getCyclesFromPriority(unsigned int priority) {
@@ -696,6 +725,12 @@ int main() {
     int timerthreadcreated = pthread_create(&timerThread, NULL, timerFunc, (void*)runningProcess);
     int IO1threadcreated = pthread_create(&IO1Thread, NULL, IO1Func, (void*)runningProcess);
     int IO2threadcreated = pthread_create(&IO2Thread, NULL, IO2Func, (void*)runningProcess);
+
+    for(int i = 0; i < 10; i++) {
+		prodConR[i] = create_resource();
+		mutualR1[i] = create_resource();
+		mutualR2[i] = create_resource();
+    }
     // main loop
     OS_Simulator(&readyProcesses, &runningProcess);
 

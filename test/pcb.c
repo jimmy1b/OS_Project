@@ -64,6 +64,7 @@ struct PCB_s {
     //fields added in final project.
     enum pcb_type type;
     //enum pcb_type type;
+    int resource;
 } PCB_s;
 
 /* constructor */
@@ -96,6 +97,7 @@ PCB_p create_pcb() {
         pcb->cycles = 0;
         pcb->privileged = 0;
         pcb->type = normal;
+        pcb->resource = 0;
         //pcb->max_pc = 2345;
         pcb->t = time(NULL);
         pcb->creation = *localtime(&(pcb->t));
@@ -131,53 +133,82 @@ PCB_p create_pcb() {
     }
     return pcb;
 }
+
 PCB_p create_noio_pcb() {
-  PCB_p pcb = (PCB_p) malloc(sizeof(PCB_s));
-  pcb->context = (CPU_context_p) malloc(sizeof(CPU_context_s));
-  if (!pcb) {
-      return NULL;
-  } else {
-      pcb->context->pc = 0;
-      pcb->context->ir = 0;
-      pcb->context->psr = 0;
-      pcb->context->r0 = 0;
-      pcb->context->r1 = 0;
-      pcb->context->r2 = 0;
-      pcb->context->r3 = 0;
-      pcb->context->r4 = 0;
-      pcb->context->r5 = 0;
-      pcb->context->r6 = 0;
-      pcb->context->r7 = 0;
+    PCB_p pcb = (PCB_p) malloc(sizeof(PCB_s));
+    pcb->context = (CPU_context_p) malloc(sizeof(CPU_context_s));
+    if (!pcb) {
+        return NULL;
+    } else {
+        pcb->context->pc = 0;
+        pcb->context->ir = 0;
+        pcb->context->psr = 0;
+        pcb->context->r0 = 0;
+        pcb->context->r1 = 0;
+        pcb->context->r2 = 0;
+        pcb->context->r3 = 0;
+        pcb->context->r4 = 0;
+        pcb->context->r5 = 0;
+        pcb->context->r6 = 0;
+        pcb->context->r7 = 0;
 
-      pcb->pid = currentpid++;
-      pcb->state = new;
-      pcb->parent = 0;
-      pcb->priority = 0;
-      pcb->mem = 0;
-      pcb->size = 0;
-      pcb->channel_no = 0;
-      pcb->cycles = 0;
-      pcb->privileged = 0;
-      pcb->type = noio;
-      //pcb->max_pc = 2345;
-      pcb->t = time(NULL);
-      pcb->creation = *localtime(&(pcb->t));
-      //pcb->termination = ???
-      //pcb->terminate = 2;
-      pcb->term_count = 0;
-      srand(time(NULL));
-      pcb->max_pc = rand() % 4000;
-      pcb->terminate = rand() % 10;
-      int i;
-      for (i = 0; i < 4; i++) {
-          int val = pcb->max_pc + 1;
-          pcb->io_1_traps[i] = val;
-          pcb->io_2_traps[i] = val;
+        pcb->pid = currentpid++;
+        pcb->state = new;
+        pcb->parent = 0;
+        pcb->priority = 0;
+        pcb->mem = 0;
+        pcb->size = 0;
+        pcb->channel_no = 0;
+        pcb->cycles = 0;
+        pcb->privileged = 0;
+        pcb->type = noio;
+        pcb->resource = 0;
+        //pcb->max_pc = 2345;
+        pcb->t = time(NULL);
+        pcb->creation = *localtime(&(pcb->t));
+          //pcb->termination = ???
+          //pcb->terminate = 2;
+        pcb->term_count = 0;
+        srand(time(NULL));
+        pcb->max_pc = rand() % 4000;
+        pcb->terminate = rand() % 10;
+        int i;
+        for (i = 0; i < 4; i++) {
+            int val = pcb->max_pc + 1;
+            pcb->io_1_traps[i] = val;
+            pcb->io_2_traps[i] = val;
 
 
-      }
-  }
-  return pcb;
+        }
+    }
+    return pcb;
+}
+
+PCB_p create_prod_pcb(int res) {
+    PCB_p pcb = create_pcb();
+    if (pcb) {
+        pcb->resource = res;
+        pcb->type = producer;
+    }
+    return pcb;
+}
+
+PCB_p create_cons_pcb(int res) {
+    PCB_p pcb = create_pcb();
+    if (pcb) {
+        pcb->resource = res;
+        pcb->type = consumer;
+    }
+    return pcb;
+}
+
+PCB_p create_mutual_pcb(int res) {
+    PCB_p pcb = create_pcb();
+    if (pcb) {
+        pcb->resource = res;
+        pcb->type = mutual;
+    }
+    return pcb;
 }
 
 /* deconstructor */
@@ -230,6 +261,14 @@ void set_type(PCB_p pcb, enum pcb_type new_type) {
 
 enum pcb_type get_type(PCB_p pcb) {
     return pcb->type;
+}
+
+void set_pcb_resource(PCB_p pcb, int res) {
+    pcb->resource = res;
+}
+
+int get_pcb_resource(PCB_p pcb) {
+    return pcb->resource;
 }
 
 //Setters and getters for max_pc
