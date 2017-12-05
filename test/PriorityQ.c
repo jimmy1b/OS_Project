@@ -48,6 +48,7 @@ unsigned int pq_size(PriorityQ_p queue) {
 /*Adds given pcb to the Priority Queue.*/
 void pq_enqueue(PriorityQ_p queue, PCB_p data)
 {
+    if (!data) return;
     int priority = get_priority(data);
     queue->count++;
 	fifo_enqueue(queue->priorities[priority], data);
@@ -93,9 +94,15 @@ void print_priority_queue(PriorityQ_p queue) {
 
 /*Destroys this Priority Queue.*/
 void destroy_pq(PriorityQ_p queue) {
-	while(pq_isEmpty(queue) == 0)
+	while(pq_isEmpty(queue))
 	{
-		pq_dequeue(queue);
+		pcb = pq_dequeue(queue);
+		destroy_pcb(pcb);
+	}
+	for(i = 0; i <= MAX_PRIORITY; i++)
+	{
+		FIFO_Queue_p fifo = queue->priorities[i];
+		destroy(fifo);
 	}
 	free(queue);
 }
