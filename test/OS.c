@@ -40,6 +40,9 @@ pthread_mutex_t priorityMutex;
 pthread_mutex_t timerMutex;
 pthread_mutex_t Io1Mutex;
 pthread_mutex_t Io2Mutex;
+Resource_p prodConR[10];
+Resource_p mutualR1[10];
+Resource_p mutualR2[10];
 //Resource_s runningMutex;
 
 // The os simulator, runs the main loop.
@@ -469,7 +472,8 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     dispatchCount++;
     //printf("Check3\n");
     // update context if the pcb was not halted.
-    if(get_state(*runningProcess) != halted &&
+    if(*runningProcess != NULL &&
+	get_state(*runningProcess) != halted &&
         get_state(*runningProcess) != waiting) {
         //printf("Check3\n");
         // update the pc counter.
@@ -519,6 +523,9 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
         set_state(*runningProcess, running);
         //printf("Check3\n");
         sysStack = get_pc(*runningProcess);
+    } return SUCCESSFUL;
+    } else {
+        return FAILED
     }
     //printf("Check4\n");
 
@@ -575,8 +582,35 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
           fifo_enqueue(newProcesses, pcb);
 
         }
-      }
+      
+	  } else if (type == 2) {
+		for(i = 0; i < 10; i++) {
+			PCB_p pcb1 = create_prod_pcb(i);
+			fifo_enqueue(newProcesses, pcb1);
+			PCB_p pcb2 = create_cons_pcb(i);
+			fifo_enqueue(newProcesses, pcb2);
+
+
+          // 20% chance that the pcb will become privileged.
+          /*if(rand() % 100 < 20 ) {//&& privilegedCount < 4)  {
+              setPrivileged(pcb);
+              privilegedPCBs[privilegedCount] = pcb;
+              privilegedCount++;
+          })*/
+          
+		}
+
+		// mutual resource pairs
+	} else if (type == 3) {
+		for(i = 0; i < 10; i++) {
+			PCB_p pcb1 = create_mutual_pcb(i);
+			fifo_enqueue(newProcesses, pcb1);
+			PCB_p pcb2 = create_mutual_pcb(i);
+			fifo_enqueue(newProcesses, pcb2);
+			}
+		}
     }
+	
 
 // Returns the number of cycles that each queue uses.
 unsigned int getCyclesFromPriority(unsigned int priority) {
@@ -704,6 +738,11 @@ int main() {
     thePriority = 0;
 
     set_state(runningProcess, running);
+	 for(int i = 0; i < 10; i++) {
+		prodConR[i] = create_resource();
+		mutualR1[i] = create_resource();
+		mutualR2[i] = create_resource();
+    }
 
     currentPC = 0;
     sysStack = 0;
