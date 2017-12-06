@@ -95,6 +95,7 @@ void print_priority_queue(PriorityQ_p queue) {
 /*Destroys this Priority Queue.*/
 void destroy_pq(PriorityQ_p queue) {
 	while(pq_isEmpty(queue))
+
 	{
 		pcb = pq_dequeue(queue);
 		destroy_pcb(pcb);
@@ -103,6 +104,7 @@ void destroy_pq(PriorityQ_p queue) {
 	{
 		FIFO_Queue_p fifo = queue->priorities[i];
 		destroy(fifo);
+
 	}
 	free(queue);
 }

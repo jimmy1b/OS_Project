@@ -37,6 +37,7 @@ PCB_p create_prod_pcb(int res);
 PCB_p create_cons_pcb(int res);
 PCB_p create_mutual_pcb(int res);
 
+
 /* deconstructor */
 // Deallocates the memory for the pcb passed in.
 void destroy_pcb(PCB_p p);
@@ -116,5 +117,6 @@ const char* get_state_name(enum state_type state);
 void set_pcb_resource(PCB_p pcb, int res);
 
 int get_pcb_resource(PCB_p pcb);
+
 
 #endif

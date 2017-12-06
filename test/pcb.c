@@ -64,7 +64,9 @@ struct PCB_s {
     //fields added in final project.
     enum pcb_type type;
     //enum pcb_type type;
+
     int resource;
+
 } PCB_s;
 
 /* constructor */
@@ -97,7 +99,9 @@ PCB_p create_pcb() {
         pcb->cycles = 0;
         pcb->privileged = 0;
         pcb->type = normal;
+
         pcb->resource = 0;
+
         //pcb->max_pc = 2345;
         pcb->t = time(NULL);
         pcb->creation = *localtime(&(pcb->t));
@@ -210,6 +214,31 @@ PCB_p create_mutual_pcb(int res) {
     }
     return pcb;
 }
+PCB_p create_prod_pcb(int res) {
+    PCB_p pcb = create_pcb();
+    if (pcb) {
+        pcb->resource = res;
+        pcb->type = producer;
+    }
+    return pcb;
+}
+
+PCB_p create_cons_pcb(int res) {
+    PCB_p pcb = create_pcb();
+    if (pcb) {
+        pcb->resource = res;
+        pcb->type = consumer;
+    }
+    return pcb;
+}
+
+PCB_p create_mutual_pcb(int res) {
+    PCB_p pcb = create_pcb();
+    if (pcb) {
+        pcb->resource = res;
+        pcb->type = mutual;
+    }
+    return pcb;
 
 /* deconstructor */
 // Deallocates the memory for the pcb passed in.
@@ -230,7 +259,9 @@ void destroy_pcb(PCB_p p) {
 //Returns 2 if io_2 contains,
 //Returns 0 otherwise.
 int io_contains_pc(PCB_p pcb) {
+
     if(pcb == NULL) return -1;
+
     int pc = pcb->context->pc;
     int i;
     for (i = 0; i < 4; i++) {
@@ -252,30 +283,37 @@ void set_pid(PCB_p pcb, unsigned int num) {
 }
 
 unsigned int get_pid(PCB_p pcb) {
+
     if(pcb == NULL) return -1;
+
     return pcb->pid;
 }
 
 //type type setter/getters.
 void set_type(PCB_p pcb, enum pcb_type new_type) {
+
     if (!pcb) return;
+
     pcb->type = new_type;
 }
 
 enum pcb_type get_type(PCB_p pcb) {
+
     if(pcb == NULL) return NULL;
+
     return pcb->type;
 }
-
 void set_pcb_resource(PCB_p pcb, int res) {
     if (!pcb) return;
     pcb->resource = res;
 }
 
+
 int get_pcb_resource(PCB_p pcb) {
     if(pcb == NULL) return -1;
     return pcb->resource;
 }
+
 
 //Setters and getters for max_pc
 void set_max_pc(PCB_p pcb, unsigned int new_max_pc) {
@@ -285,51 +323,68 @@ void set_max_pc(PCB_p pcb, unsigned int new_max_pc) {
 
 unsigned int get_max_pc(PCB_p pcb) {
     if(pcb == NULL) return -1;
+
     return pcb->max_pc;
 }
 
 //Returns time of creation of pcb.
 int get_creation_sec(PCB_p pcb) {
+
     if (!pcb) return;
+
     return (pcb->creation).tm_sec;
 }
 
 //Sets termination time of the pcb.
 void set_termination(PCB_p pcb) {
+
     if (!pcb) return;
+
     pcb->termination = *localtime(&(pcb->t));
 }
 
 //Getters and setters of terminate field.
 void set_terminate(PCB_p pcb, unsigned int new_terminate) {
+
     if (!pcb) return;
+
     pcb->terminate = new_terminate;
 }
 
 unsigned int get_terminate(PCB_p pcb) {
+
     if(pcb == NULL) return -1;
+
     return pcb->terminate;
 }
 
 //Getters and setter of term_count.
 void set_term_count(PCB_p pcb, unsigned int new_term_count) {
+
     if (!pcb) return;
+
     pcb->term_count = new_term_count;
 }
 
 unsigned int get_term_count(PCB_p pcb) {
+
     if (!pcb) return -1;
+
     return pcb->term_count;
 }
 
 // Sets the state_type of the pcb passed in.
 void set_state(PCB_p pcb, enum state_type type) {
+
     if (!pcb) return;
+
     pcb->state = type;
 }
 
 enum state_type get_state(PCB_p pcb) {
+
     if (!pcb) return NULL;
+
     return pcb->state;
 }
 
@@ -340,13 +395,17 @@ void set_priority(PCB_p pcb, unsigned char priority) {
 }
 
 unsigned char get_priority(PCB_p pcb) {
+
     if (!pcb) return 1;
+
     return pcb->priority;
 }
 
 // Returns the cycles the pcb has run.
 unsigned int get_cycles(PCB_p pcb) {
+
     if (!pcb) return -1;
+
     return pcb->cycles;
 }
 
@@ -364,12 +423,15 @@ int isPrivileged(PCB_p pcb) {
 
 // Sets the pcb to privileged.
 void setPrivileged(PCB_p pcb) {
+
     if (!pcb) return;
+
     pcb->privileged = 1;
 }
 
 // returns the pcbs pc value.
 unsigned int get_pc(PCB_p pcb) {
+	if (!pcb) return -1;s
     if(pcb == NULL) return -1;
     if(pcb->context == NULL) return -1;
 
@@ -378,7 +440,9 @@ unsigned int get_pc(PCB_p pcb) {
 
 // Sets the pcbs pc value to the given pc.
 void set_pc(PCB_p pcb, unsigned int pc) {
+
     if (!pcb) return;
+
     int maximum = pcb->max_pc;
     if(pc > maximum && pcb->terminate != 0) {
       pcb->context->pc = 0;
@@ -402,12 +466,16 @@ void print_pcb_file(PCB_p pcb, FILE * fp) {
 }
 
 void print_pcb(PCB_p pcb){
+
     if (!pcb) return;
+
     printf("PCB: PID: %u, PRIORITY: %u, PC: %u,%u\n", pcb->pid, pcb->priority, pcb->context->pc, pcb->cycles);
 }
 
 void print_context(CPU_context_p context, FILE * fp) {
+
     if (!pcb) return;
+
     fprintf(fp, "Context Data: [pc: %u, ir: %u, psr: %u, r0: %u, r1: %u, r2: %u, r3: %u, r4: %u, r5: %u, r6: %u, r7: %u]\n",
            context->pc, context->ir, context->psr, context->r0, context->r1, context->r2, context->r3,
            context->r4, context->r5, context->r6, context->r7);
