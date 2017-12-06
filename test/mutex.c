@@ -85,7 +85,7 @@ int unlock(mutex_p mutex, PCB_p pcb) {
             return 1;
         }
     } else {
-        return -1
+        return -1;
     }
 }
 

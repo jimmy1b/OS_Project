@@ -55,3 +55,5 @@ int IOTimer(PriorityQ_p * readyProcesses);
 int startTimer(int priority);
 
 int timer(PCB_p pcb);
+
+int checkTime();

@@ -36,7 +36,7 @@ PCB_p create_pcb();
 PCB_p create_noio_pcb();
 PCB_p create_prod_pcb(int res);
 PCB_p create_cons_pcb(int res);
-PCB_p create_mutual_pcb(int res);
+PCB_p create_mutual_pcb(int res, int pNum);
 
 
 /* deconstructor */
@@ -61,7 +61,7 @@ void set_type(PCB_p pcb, enum pcb_type new_type);
 
 enum pcb_type get_type(PCB_p pcb);
 
-int get_pair(PCB_p);
+int get_pair(PCB_p pcb);
 
 //Returns second of creation of pcb.
 int get_creation_sec(PCB_p pcb);

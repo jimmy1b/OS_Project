@@ -64,3 +64,8 @@ void put(Resource_p res, int new_data) {
 //         return -1;
 //     }
 // }
+
+mutex_p getMutex(Resource_p res) {
+    if(!res) return NULL;
+    return res->mutex;
+}

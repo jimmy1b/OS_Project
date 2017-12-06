@@ -55,6 +55,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
     srand(time(NULL));
 
     int iteration = 1;
+    int processed = 0;
     int t, a, b, i, j;
     //startTimer(get_priority(*readyProcesses));
     // Main Loop
@@ -65,9 +66,11 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
         // stops making processes after 48 and if there are at least 4 Privileged pcbs
         prepareNewProcesses(); 
 
+        processed = 0;
+        
         for( ; ; ) {
 
-            if(*runningProcess != NULL) {
+            if(*runningProcess != NULL && get_state(*runningProcess) != waiting) {
                 set_pc(*runningProcess, get_pc(*runningProcess) + 1);
                 //printf("%d\n", get_pc(*runningProcess));
             // } else if (!pq_isEmpty(*readyProcesses)) {
@@ -145,43 +148,76 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    	break;
 		    }
 
-            done = 0;
-            while(!done) {
+
+            while(!processed && get_state(*runningProcess) != waiting) {
                 //producer function
                 if(get_type(*runningProcess) == producer) {
                     int r = get_pcb_resource(*runningProcess);
-                    if(lock(prodConR[r]->mutex, *runningProcess) == 1) {
+                    if(lock(getMutex(prodConR[r]), *runningProcess) == 1) {
                         if(checkTime()) break;
                         put(prodConR[r], get_pc(*runningProcess));
                         if(checkTime()) break;
-                        unlock(prodConR[r]->mutex, *runningProcess)
+                        unlock(getMutex(prodConR[r]), *runningProcess);
                         printf("%d: put data:%d\n", get_pid(*runningProcess), get_pc(*runningProcess));
                     }
 
                 //consumer function
                 } else if(get_type(*runningProcess) == consumer) {
                     int r = get_pcb_resource(*runningProcess);
-                    if(lock(prodConR[r]->mutex, *runningProcess) == 1) {
+                    if(lock(getMutex(prodConR[r]), *runningProcess) == 1) {
                         if(checkTime()) break;
-                        int g = get(prodConR[get_pcb_resource(*runningProcess)], *runningProcess);
+                        int g = get(prodConR[r]);
                         if(checkTime()) break;
-                        unlock(prodConR[r]->mutex, *runningProcess)
+                        unlock(getMutex(prodConR[r]), *runningProcess);
                         printf("%d: get data:%d\n", get_pid(*runningProcess), g);
                     }
 
                 //mutual exclusive process function
                 } else if(get_type(*runningProcess) == mutual) {
                     //deadlock
-                    if(deadlock) {
+                    int p = get_pair(*runningProcess);
+                    if(deadlock && p) {
                         printf("yes\n");
+                        int r = get_pcb_resource(*runningProcess);
+                        if(lock(getMutex(mutualR2[r]), *runningProcess) == 1) {
+                            if(checkTime()) break;
+                            if(lock(getMutex(mutualR1[r]), *runningProcess) == 1) {
+                                if(checkTime()) break;
+                                get(mutualR1[r]);
+                                if(checkTime()) break;
+                                get(mutualR2[r]);
+                                if(checkTime()) break;
+                                unlock(getMutex(mutualR2[r]), *runningProcess);
+                                if(checkTime()) break;
+                                unlock(getMutex(mutualR1[r]), *runningProcess);
+                                printf("%d: got 2 resources\n", get_pid(*runningProcess));
+                            }
+                        
+                        }
 
                     //no deadlock
                     } else {
                         printf("no\n");
+                        int r = get_pcb_resource(*runningProcess);
+                        if(lock(getMutex(mutualR1[r]), *runningProcess) == 1) {
+                            if(checkTime()) break;
+                            if(lock(getMutex(mutualR2[r]), *runningProcess) == 1) {
+                                if(checkTime()) break;
+                                get(mutualR1[r]);
+                                if(checkTime()) break;
+                                get(mutualR2[r]);
+                                if(checkTime()) break;
+                                unlock(getMutex(mutualR2[r]), *runningProcess);
+                                if(checkTime()) break;
+                                unlock(getMutex(mutualR1[r]), *runningProcess);
+                                printf("%d: got 2 resources\n", get_pid(*runningProcess));
+                            }
+                        
+                        }
 
                     }
                 }
-                done = 1;
+                processed = 1;
             }
 
             //IO Trap
@@ -191,13 +227,14 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
             if (iotrap == 1) {
                 printf("IO1\n");
                 set_state(*runningProcess, waiting);
-                scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
                 if (IO1Process != NULL) {
                     fifo_enqueue(IO1Queue, *runningProcess);
                 } else {
                     //remember
                     IO1Process = *runningProcess;
                 }
+                scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
+                
                 printf("printing IO1QUEUE:");
                 print_fifo_queue(IO1Queue);
 
@@ -223,18 +260,18 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 //print_priority_queue(*readyProcesses);
                 break;
             }
-           if(*runningProcess != NULL) {
+            if(*runningProcess != NULL) {
 
                 // if (get_terminate(*runningProcess) > 0 && get_pc(*runningProcess) >= get_max_pc(*runningProcess)) {
                 //     //printf("term\n");
                 //     set_term_count(*runningProcess, get_term_count(*runningProcess) + 1);
                 //     set_pc(*runningProcess, 0);
-                    if (get_term_count(*runningProcess) > get_terminate(*runningProcess)) {
+                if (get_term_count(*runningProcess) > get_terminate(*runningProcess)) {
                         set_state(*runningProcess, halted);
                         scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
     //printf("Check10\n");
 
-                        break;
+                    break;
 
                 }
             }
@@ -253,14 +290,14 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		// 		}
 		// 	}
 		// }
-    quantumCounter--;
+        quantumCounter--;
     //printf("\nQuantum counter%d\n", quantumCounter);
 		iteration ++;
 		//printf("ITERATION IS: %d\n", iteration);
         if (iteration == 1000 && ((pq_isEmpty(*readyProcesses) && processCounter >= PROCESSNUMBER))){
-          printf("we ended\n");
-        break;
-      }
+            printf("we ended\n");
+            break;
+        }
     }
 }
 
@@ -621,7 +658,7 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
 		// producer, consumer pairs
 	} else if (type == 2) {
 		for(i = 0; i < rand() % 3; i++) {
-            if(prodConCounter < 10) {
+            if(prodConCounter < RESOURCEPROCESSNUMBER) {
                 PCB_p pcb1 = create_prod_pcb(prodConCounter);
                 fifo_enqueue(newProcesses, pcb1);
                 PCB_p pcb2 = create_cons_pcb(prodConCounter);
@@ -634,10 +671,10 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
 		// mutual resource pairs
 	} else if (type == 3) {
 		for(i = 0; i < rand() % 3; i++) {
-			if(mutualCounter < 10) {
-                PCB_p pcb1 = create_prod_pcb(mutualCounter, 0);
+			if(mutualCounter < RESOURCEPROCESSNUMBER) {
+                PCB_p pcb1 = create_mutual_pcb(mutualCounter, 0);
                 fifo_enqueue(newProcesses, pcb1);
-                PCB_p pcb2 = create_cons_pcb(mutualCounter, 1);
+                PCB_p pcb2 = create_mutual_pcb(mutualCounter, 1);
                 fifo_enqueue(newProcesses, pcb2);
                 mutualCounter++;
             } else {
@@ -646,7 +683,6 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
 		}
 	}
 }
-
 
 // Returns the number of cycles that each queue uses.
 unsigned int getCyclesFromPriority(unsigned int priority) {

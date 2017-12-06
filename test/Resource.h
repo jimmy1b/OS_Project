@@ -9,8 +9,10 @@ Resource_p create_resource();
 
 int destroy_resource(Resource_p res);
 
-int get(Resource_p res, PCB_p pcb);
+int get(Resource_p res);
 
-void put (Resource_p res, PCB_p pcb, int new_data);
+void put (Resource_p res, int new_data);
+
+mutex_p getMutex(Resource_p res);
 #endif // RESOURCE_H
  

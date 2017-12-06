@@ -274,7 +274,7 @@ enum pcb_type get_type(PCB_p pcb) {
     return pcb->type;
 }
 
-int get_pair(PCB_p) {
+int get_pair(PCB_p pcb) {
     if (!pcb) return -1;
     return pcb->pair;
 }
