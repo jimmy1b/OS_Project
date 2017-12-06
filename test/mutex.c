@@ -39,7 +39,7 @@ int destroy_mutex(mutex_p mutex) {
 //Return 1 if acquired lock.
 int lock(mutex_p mutex, PCB_p pcb) {
     if (mutex->state == locked) {
-        if (mutex->pcb == pcb) {
+        if (get_pid(mutex->pcb) == get_pid(pcb)) {
             return 1;
         } else {
             fifo_enqueue(mutex->waiting_q, pcb);
@@ -47,15 +47,10 @@ int lock(mutex_p mutex, PCB_p pcb) {
             return 0; //failed to acquire lock.
         }
     } else {
-        if (fifo_is_empty(mutex->waiting_q)) {
-            mutex->pcb = pcb;
-            mutex->state = locked;
-            return 1;
-        } else {
-            fifo_enqueue(mutex->waiting_q, pcb);
-            set_state(pcb, waiting);
-            return 0;
-        }
+
+        mutex->pcb = pcb;
+        mutex->state = locked;
+        return 1;
     }
 }
 
@@ -73,7 +68,7 @@ int trylock(mutex_p mutex) {
 
 //0=lock available, 1=unavailable, -1=wrong pcb
 int unlock(mutex_p mutex, PCB_p pcb) {
-    if(mutex->pcb == pcb) {
+    if(get_pid(mutex->pcb) == get_pid(pcb)) {
         if (fifo_is_empty(mutex->waiting_q)) {
             mutex->pcb = NULL;
             mutex->state = unlocked;
