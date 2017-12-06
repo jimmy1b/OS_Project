@@ -329,7 +329,7 @@ void set_state(PCB_p pcb, enum state_type type) {
 }
 
 enum state_type get_state(PCB_p pcb) {
-    // if (!pcb) return NULL;
+    if (!pcb) return none;
     // need to return something
     return pcb->state;
 }

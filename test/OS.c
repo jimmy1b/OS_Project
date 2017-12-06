@@ -58,12 +58,13 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
     // Main Loop
     // One cycle is one quantum
     for( ; ; ) { // for spider
+
         // stops making processes after 48 and if there are at least 4 Privileged pcbs
         if(processCounter <= PROCESSNUMBER) {// && privilegedCount < 4) {
             createNewProcesses(newProcesses, 0);
             processCounter += fifo_size(newProcesses);
         }
-        if(processCounter < noIOCounter) {
+        if(noIOCounter <= NOIOPROCESSNUMBER) {
           createNewProcesses(newNoIos, 1);
           noIOCounter += fifo_size(newNoIos);
         }
@@ -112,8 +113,8 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
             b = IO2time;
             pthread_mutex_unlock(&Io2Mutex);
 
-            a = IOTimer(readyProcesses);
-            printf("a is: %d\n", a);
+            // a = IOTimer(readyProcesses);
+            // printf("a is: %d\n", a);
 		    if (a == 1 && IO1Process != NULL) {
 //printf("Check20\n");
 		    	//throw io 1 interrupt
@@ -122,7 +123,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 // if(!fifo_is_empty){
                 //   IO1Process = fifo_dequeue(IO1Queue);
                 // }
-                printf("IO1QUEUE is: ");
+                printf("\nIO1QUEUE is: ");
                 print_fifo_queue(IO1Queue);
                 pseudoISR(readyProcesses, runningProcess);
 //printf("Check5\n");
@@ -239,8 +240,8 @@ int IOTimer(PriorityQ_p * readyProcesses) {
     pthread_mutex_lock(&Io2Mutex);
     int check2 = IO2time;
     pthread_mutex_unlock(&Io2Mutex);
-    printf("check is: %d\n", check);
-    printf("check2 is: %d\n", check2);
+    //printf("check is: %d\n", check);
+    //printf("check2 is: %d\n", check2);
     if (check == 1) {
         printf("I/O 1 complete\n");
         pthread_mutex_lock(&Io1Mutex);
@@ -327,6 +328,7 @@ int IOTimer(PriorityQ_p * readyProcesses) {
 // The psuedo-ISR, sets the state of the running process,
 // calls the scheduler and updates the PC.
 int pseudoISR(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
+
     // Sets the status to interrupted.
     set_state(*runningProcess, interrupted);
 //printf("Check6\n");
@@ -336,7 +338,7 @@ int pseudoISR(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     //set_pc(*runningProcess, sysStack);
 //printf("Check51\n");
     // scheduler up call
-
+    printf("yea14\n");
     scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
 //printf("Check52\n");
     // IRET (update current pc)
@@ -363,10 +365,15 @@ int timer(PCB_p pcb) {
 
 // Runs the scheduler to handle interrupts.
 int scheduler(PriorityQ_p * readyProcesses, PCB_p* runningProcess, int interrupt) {
+//scheduler(readyProcesses, *runningProcess, 0)
     //printf("\n%d\n", interrupt);
+
 printf("somewhere in scheduler\n");
 printf("interrupt is: %d\n", interrupt);
-printf("pid is %d\n", get_pid(*runningProcess));
+
+  printf("pid is %d\n", get_pid(*runningProcess));
+
+
     switch(interrupt) {
         //case 1:
 
@@ -398,6 +405,8 @@ printf("pid is %d\n", get_pid(*runningProcess));
             pq_enqueue(*readyProcesses, *runningProcess);
             printf("case ready finished\n");
             break;
+        case none://no pcb yet
+            dispatcher(readyProcesses, runningProcess);
         default:
             // error handling as needed
             break;
@@ -709,12 +718,12 @@ int main() {
     newNoIos = create_fifo_queue();
     PriorityQ_p readyProcesses = create_pq();
 
-    PCB_p runningProcess = create_pcb();
+    PCB_p runningProcess = NULL;
 
     //FIFO_Queue_p dieingProcesses = create_fifo_queue();
     dieingProcesses = create_fifo_queue();
-    // PCB_p IO1Process = create_pcb();
-    // PCB_p IO2Process = create_pcb();
+    PCB_p IO1Process = NULL;
+    PCB_p IO2Process = NULL;
     IO1Queue = create_fifo_queue();
     IO2Queue = create_fifo_queue();
     // set a process to running
@@ -735,10 +744,12 @@ int main() {
     quantumCounter = quantum;
     processCounter = 1;
     //create threads
-    int timerthreadcreated = pthread_create(&timerThread, NULL, timerFunc, (void*)runningProcess);
-    int IO1threadcreated = pthread_create(&IO1Thread, NULL, IO1Func, (void*)runningProcess);
-    int IO2threadcreated = pthread_create(&IO2Thread, NULL, IO2Func, (void*)runningProcess);
-    
+
+    int timerthreadcreated = pthread_create(&timerThread, NULL, timerFunc, NULL);
+    int IO1threadcreated = pthread_create(&IO1Thread, NULL, IO1Func, NULL);
+    int IO2threadcreated = pthread_create(&IO2Thread, NULL, IO2Func, NULL);
+
+
     // main loop
     OS_Simulator(&readyProcesses, &runningProcess);
 

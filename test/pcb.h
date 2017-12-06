@@ -24,7 +24,7 @@ typedef struct CPU_context_s *CPU_context_p;
 
 typedef struct PCB_s * PCB_p;
 
-enum state_type {new, ready, running, interrupted, waiting, halted};
+enum state_type {new, ready, running, interrupted, waiting, halted, none};
 
 enum pcb_type {normal, noio, producer, consumer, mutual};
 
