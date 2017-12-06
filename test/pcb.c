@@ -122,12 +122,12 @@ PCB_p create_pcb() {
             }
         }
         for (i = 0; i < 4; i++) {
-            int val = rand() % (pcb->max_pc);
+            int val = (rand() * 3) % (pcb->max_pc);
             if (i == 0) {
                 pcb->io_2_traps[i] = val;
             } else {
                 while (val == pcb->io_2_traps[i - 1]) {
-                    val = rand() % (pcb->max_pc);
+                    val = (rand() * 3) % (pcb->max_pc);
                 }
                 pcb->io_2_traps[i] = val;
             }
