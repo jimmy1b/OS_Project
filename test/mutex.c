@@ -11,13 +11,14 @@ struct mutex_s {
     enum lock_state state;
 
 } mutex_s;
+
 //Creates and returns mutex.
 mutex_p create_mutex() {
     mutex_p mutex = (mutex_p) malloc(sizeof(mutex_s));
     if (!mutex) {
         return NULL;
     } else {
-        mutex->pcb = NULL;
+        //mutex->pcb = create_pcb();
         mutex->waiting_q = create_fifo_queue();
         mutex->state = unlocked;
 
@@ -31,9 +32,15 @@ mutex_p create_mutex() {
 //Return 1 if acquired lock.
 int lock(mutex_p mutex, PCB_p pcb) {
     if (mutex->state == locked) {
-        fifo_enqueue(mutex->waiting_q, pcb);
-        set_state(pcb, waiting);
-        return 0; //failed to acquire lock.
+        if (get_pid(pcb) == get_pid(mutex->pcb)) {
+            printf("you're already owning the lock\n");
+            return 1;
+        } else {
+            printf("you're placed into the waiting queue\n");
+            fifo_enqueue(mutex->waiting_q, pcb);
+            set_state(pcb, waiting);
+            return 0; //failed to acquire lock.
+        }
     } else {
         if (fifo_is_empty(mutex->waiting_q)) {
             mutex->pcb = pcb;
@@ -41,6 +48,7 @@ int lock(mutex_p mutex, PCB_p pcb) {
             return 1;
         } else {
             fifo_enqueue(mutex, pcb);
+            mutex->state = locked;
             set_state(pcb, waiting);
             return 0;
         }
@@ -59,16 +67,20 @@ int trylock(mutex_p mutex) {
     }
 }
 
-int unlock(mutex_p mutex) {
-    if (fifo_is_empty(mutex->waiting_q)) {
-        mutex->pcb = NULL;
-        mutex->state = unlocked;
-        return 0;
+int unlock(mutex_p mutex, PCB_p pcb) {
+    if (get_pid(pcb) != get_pid(mutex->pcb)) {
+        printf("you're not the one holding the lock\n");
     } else {
-        mutex->pcb = fifo_dequeue(mutex->waiting_q);
-        set_state(mutex->pcb, running);
-        mutex->state = locked;
-        return 1;
+        if (fifo_is_empty(mutex->waiting_q)) {
+            mutex->pcb = NULL;
+            mutex->state = unlocked;
+            return 0;
+        } else {
+            mutex->pcb = fifo_dequeue(mutex->waiting_q);
+            set_state(mutex->pcb, running);
+            mutex->state = locked;
+            return 1;
+        }
     }
 }
 
@@ -77,3 +89,4 @@ int TestAndSet(int *old_ptr, int new) {
     *old_ptr = new;
     return old;
 }
+
