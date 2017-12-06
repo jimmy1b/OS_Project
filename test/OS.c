@@ -41,9 +41,11 @@ pthread_mutex_t timerMutex;
 pthread_mutex_t Io1Mutex;
 pthread_mutex_t Io2Mutex;
 
+
 Resource_p prodConR[10];
 Resource_p mutualR1[10];
 Resource_p mutualR2[10];
+
 
 // The os simulator, runs the main loop.
 int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
@@ -56,7 +58,6 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
     // Main Loop
     // One cycle is one quantum
     for( ; ; ) { // for spider
-        //printf("Numb\n");
         // stops making processes after 48 and if there are at least 4 Privileged pcbs
         if(processCounter <= PROCESSNUMBER) {// && privilegedCount < 4) {
             createNewProcesses(newProcesses, 0);
@@ -64,33 +65,10 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
         }
         if(processCounter < noIOCounter) {
           createNewProcesses(newNoIos, 1);
-
           noIOCounter += fifo_size(newNoIos);
         }
 
-
-
-
-        //Simulate Process Running
-        //set_pc(*runningProcess, get_pc(*runningProcess) + 1);
-
-        // Push to SysStack
-        //sysStack = currentPC;
-//printf("Check5\n");
-
-
-
-
-
-
-
-
-
         for( ; ; ) {
-            //timer int check
-
-
-            //t = timer(*runningProcess);
 
             if(*runningProcess != NULL) {
                 set_pc(*runningProcess, get_pc(*runningProcess) + 1);
@@ -114,8 +92,8 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 theTime = 0;
 
                 pthread_mutex_unlock(&timerMutex);
-            printf("%d\nmax pc : %d\n", get_pc(*runningProcess), get_max_pc(*runningProcess));
-            print_priority_queue(*readyProcesses);
+            //printf("%d\nmax pc : %d\n", get_pc(*runningProcess), get_max_pc(*runningProcess));
+           // print_priority_queue(*readyProcesses);
 
 	       		pseudoISR(readyProcesses, runningProcess);
 
@@ -126,7 +104,6 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
 		        break;
 		    }
-
             //IO timer int check
             pthread_mutex_trylock(&Io1Mutex);
             a = IO1time;
@@ -135,7 +112,8 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
             b = IO2time;
             pthread_mutex_unlock(&Io2Mutex);
 
-		   // a = IOTimer
+            a = IOTimer(readyProcesses);
+            printf("a is: %d\n", a);
 		    if (a == 1 && IO1Process != NULL) {
 //printf("Check20\n");
 		    	//throw io 1 interrupt
@@ -144,7 +122,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 // if(!fifo_is_empty){
                 //   IO1Process = fifo_dequeue(IO1Queue);
                 // }
-
+                printf("IO1QUEUE is: ");
                 print_fifo_queue(IO1Queue);
                 pseudoISR(readyProcesses, runningProcess);
 //printf("Check5\n");
@@ -152,7 +130,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    	break;
 		    }
 
-            if (b == 1 && IO2Process != NULL) {
+        if (b == 1 && IO2Process != NULL) {
 //printf("Check21\n");
 		    	//throw io 2 interrupt
                 printf("yeayea14\n");
@@ -160,8 +138,9 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 set_state(IO2Process, ready);
                 scheduler(readyProcesses, &IO2Process, get_state(IO2Process));
                 if(!fifo_is_empty){
-                    IO2Process = fifo_dequeue(IO2Queue);
+                  IO2Process = fifo_dequeue(IO2Queue);
                 }
+                printf("IO2QUEUE is: ");
                 print_fifo_queue(IO2Queue);
                 pseudoISR(readyProcesses, runningProcess);
 //printf("Check6\n");
@@ -170,7 +149,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    }
 
             //IO Trap
-            int iotrap = 3;//io_contains_pc(*runningProcess);
+            int iotrap = io_contains_pc(*runningProcess);
             //assert(IO1Process != NULL);
             //assert(IO2Process != NULL);
             if (iotrap == 1) {
@@ -183,6 +162,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                     //remember
                     IO1Process = *runningProcess;
                 }
+                printf("printing IO1QUEUE:");
                 print_fifo_queue(IO1Queue);
 
                 printf("Check22\n");
@@ -198,6 +178,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 } else {
                 IO2Process = fifo_dequeue(IO2Queue);
                 }
+                printf("PRINTING IO2QUEUE:");
                 print_fifo_queue(IO2Queue);
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
                 printf("Check23\n");
@@ -237,7 +218,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		// 	}
 		// }
     quantumCounter--;
-    printf("\nQuantum counter%d\n", quantumCounter);
+    //printf("\nQuantum counter%d\n", quantumCounter);
 		iteration ++;
 		//printf("ITERATION IS: %d\n", iteration);
         if (iteration == 1000 && ((pq_isEmpty(*readyProcesses) && processCounter >= PROCESSNUMBER))){
@@ -251,34 +232,39 @@ int IOTimer(PriorityQ_p * readyProcesses) {
 	// if (io_contains_pc(*runningProcess) == 1) {//enter logic to enqueue pcb into IO1queue if value matches the IO1 array.
  //        fifo_enqueue(IOQueue, *runningProcess);
 	// }
-  pthread_mutex_lock(&Io1Mutex);
-  int check = IO1time;
-  pthread_mutex_unlock(&Io1Mutex);
-  pthread_mutex_lock(&Io2Mutex);
-  int check2 = IO2time;
-  pthread_mutex_unlock(&Io2Mutex);
-  if (check == 1) {
-    printf("I/O 1 complete\n");
     pthread_mutex_lock(&Io1Mutex);
-    IO1time = 0;
+    int check = IO1time;
+    //printf("check is: %d\n", check);
     pthread_mutex_unlock(&Io1Mutex);
-    if(IO1Process != NULL) {
-      set_state(IO1Process, ready);
-      scheduler(readyProcesses, &IO1Process, get_state(IO1Process));
-    }
-    return 1;
-  } else if (check2 == 1) {
-    printf("I/O 2 complete\n");
     pthread_mutex_lock(&Io2Mutex);
-    IO2time = 0;
+    int check2 = IO2time;
     pthread_mutex_unlock(&Io2Mutex);
-    if(IO2Process != NULL) {
-      set_state(IO2Process, ready);
-      scheduler(readyProcesses, &IO2Process, get_state(IO2Process));
+    printf("check is: %d\n", check);
+    printf("check2 is: %d\n", check2);
+    if (check == 1) {
+        printf("I/O 1 complete\n");
+        pthread_mutex_lock(&Io1Mutex);
+        IO1time = 0;
+        pthread_mutex_unlock(&Io1Mutex);
+        if(IO1Process != NULL) {
+            set_state(IO1Process, ready);
+            printf("in IOTimer, check = 1, after this I go to scheduler\n");
+            scheduler(readyProcesses, &IO1Process, get_state(IO1Process));
+
+        }
+        return 1;
+    } else if (check2 == 1) {
+        printf("I/O 2 complete\n");
+        pthread_mutex_lock(&Io2Mutex);
+        IO2time = 0;
+        pthread_mutex_unlock(&Io2Mutex);
+        if(IO2Process != NULL) {
+            set_state(IO2Process, ready);
+            scheduler(readyProcesses, &IO2Process, get_state(IO2Process));
+        }
+        return 2;
     }
-    return 2;
-  }
-  return 0;
+    return 0;
 }
 	// if (IO1time <= 0 && IO1Process != NULL) {
   //       printf(" I/O 1 complete\n");
@@ -378,7 +364,9 @@ int timer(PCB_p pcb) {
 // Runs the scheduler to handle interrupts.
 int scheduler(PriorityQ_p * readyProcesses, PCB_p* runningProcess, int interrupt) {
     //printf("\n%d\n", interrupt);
-
+printf("somewhere in scheduler\n");
+printf("interrupt is: %d\n", interrupt);
+printf("pid is %d\n", get_pid(*runningProcess));
     switch(interrupt) {
         //case 1:
 
@@ -406,7 +394,9 @@ int scheduler(PriorityQ_p * readyProcesses, PCB_p* runningProcess, int interrupt
         //case 4:
         case ready: //IO completion
 	    //printf("Check4\n");
+            printf("case ready started\n");
             pq_enqueue(*readyProcesses, *runningProcess);
+            printf("case ready finished\n");
             break;
         default:
             // error handling as needed
@@ -415,6 +405,8 @@ int scheduler(PriorityQ_p * readyProcesses, PCB_p* runningProcess, int interrupt
 
     //enqueues new processes
     while(!fifo_is_empty(newProcesses)) {
+
+
 
       //print_fifo_queue(newProcesses);
 
@@ -465,8 +457,10 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     dispatchCount++;
     //printf("Check3\n");
     // update context if the pcb was not halted.
-    if(*runningProcess != NULL && get_state(*runningProcess) != halted &&
-        get_state(*runningProcess) != waiting) {
+
+    if(*runningProcess != NULL &&
+            get_state(*runningProcess) != halted &&
+            get_state(*runningProcess) != waiting) {
         //printf("Check3\n");
         // update the pc counter.
         //set_pc(*runningProcess, sysStack);
@@ -501,6 +495,12 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     //printf("Check3\n");
 
     // dequeue
+    printf("size of PQ is: %d\n", pq_size(*readyProcesses));
+
+    if (pq_size(*readyProcesses) == 0) {
+            //PQ is empty...What should we do?
+        pq_enqueue(*readyProcesses, create_pcb());
+    }
     *runningProcess = pq_dequeue(*readyProcesses);
     pthread_mutex_lock(&priorityMutex);
     thePriority = get_priority(*runningProcess);
@@ -512,16 +512,19 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     // update state to running
     // set state
     if(*runningProcess != NULL) {
-
         set_state(*runningProcess, running);
         //printf("Check3\n");
         sysStack = get_pc(*runningProcess);
+
         return SUCCESSFUL;
+
     } else {
         return FAILED;
+        printf("dispatcher HERE?\n");
     }
     //printf("Check4\n");
 
+    return SUCCESSFUL;
 }
 
 void moveProcesses (PriorityQ_p * readyProcesses) {
@@ -544,32 +547,21 @@ void moveProcesses (PriorityQ_p * readyProcesses) {
 
 // Creates a random number of processes to be added to the
 // the list of new processes.
+/*type 0 = normal
+       1 = NO IO
+       2 = Producer-Consumer
+       3 = Mutual Resource Pairs*/
 int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
     int i;
     if (type == 0) {//create normal processes
 		for(i = 0; i < rand() % 5; i++) {
 			PCB_p pcb = create_pcb();
-
-          // 20% chance that the pcb will become privileged.
-          /*if(rand() % 100 < 20 ) {//&& privilegedCount < 4)  {
-              setPrivileged(pcb);
-              privilegedPCBs[privilegedCount] = pcb;
-              privilegedCount++;
-          })*/
 			fifo_enqueue(newProcesses, pcb);
         }
-    } else if (type == 1) {
+    } else if (type == 1) {//create NO IO.
 		for(i = 0; i < rand() % 5; i++) {
 			PCB_p pcb = create_noio_pcb();
-
-
-          // 20% chance that the pcb will become privileged.
-          /*if(rand() % 100 < 20 ) {//&& privilegedCount < 4)  {
-              setPrivileged(pcb);
-              privilegedPCBs[privilegedCount] = pcb;
-              privilegedCount++;
-          })*/
-          fifo_enqueue(newProcesses, pcb);
+            fifo_enqueue(newProcesses, pcb);
 		}
 		// producer, consumer pairs
 	} else if (type == 2) {
@@ -580,13 +572,13 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
 			fifo_enqueue(newProcesses, pcb2);
 
 
+
           // 20% chance that the pcb will become privileged.
           /*if(rand() % 100 < 20 ) {//&& privilegedCount < 4)  {
               setPrivileged(pcb);
               privilegedPCBs[privilegedCount] = pcb;
               privilegedCount++;
           })*/
-          
 		}
 
 		// mutual resource pairs
@@ -596,9 +588,11 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
 			fifo_enqueue(newProcesses, pcb1);
 			PCB_p pcb2 = create_mutual_pcb(i);
 			fifo_enqueue(newProcesses, pcb2);
+
 		}
 	}
 }
+
 
 // Returns the number of cycles that each queue uses.
 unsigned int getCyclesFromPriority(unsigned int priority) {
@@ -609,7 +603,7 @@ void *timerFunc(void *t) {
   for(;;) {
     pthread_mutex_lock(&priorityMutex);
 
-    int length = getCyclesFromPriority(thePriority)* NANO_SECOND_MULTIPLIER * 1000;
+    int length = getCyclesFromPriority(thePriority)* NANO_SECOND_MULTIPLIER * 100000;
     pthread_mutex_unlock(&priorityMutex);// * NANO_SECOND_MULTIPLIER/ 10000);
     struct timespec timing;
     timing.tv_sec = 0;
@@ -629,12 +623,13 @@ void *timerFunc(void *t) {
 
 }
 void *IO1Func(void *t) {
-  sleep(30);
+  //sleep(30);
   struct timespec timing;
   //timer startup
   for(;;) {
     pthread_mutex_trylock(&Io1Mutex);
     int ioval = IO1time;
+    //printf("ioval is: %d\n", ioval);
 
     pthread_mutex_unlock(&Io1Mutex);
     if(ioval == 0 ) {
@@ -662,7 +657,7 @@ void *IO1Func(void *t) {
 
 }
 void *IO2Func(void *t) {
-  sleep(30);
+  //sleep(30);
   struct timespec timing;
   //timer startup
   for(;;) {
@@ -726,6 +721,11 @@ int main() {
     thePriority = 0;
 
     set_state(runningProcess, running);
+    for(int i = 0; i < 10; i++) {
+        prodConR[i] = create_resource();
+        mutualR1[i] = create_resource();
+        mutualR2[i] = create_resource();
+    }
 
     currentPC = 0;
     sysStack = 0;
@@ -738,12 +738,7 @@ int main() {
     int timerthreadcreated = pthread_create(&timerThread, NULL, timerFunc, (void*)runningProcess);
     int IO1threadcreated = pthread_create(&IO1Thread, NULL, IO1Func, (void*)runningProcess);
     int IO2threadcreated = pthread_create(&IO2Thread, NULL, IO2Func, (void*)runningProcess);
-
-    for(int i = 0; i < 10; i++) {
-		prodConR[i] = create_Resource();
-		mutualR1[i] = create_Resource();
-		mutualR2[i] = create_Resource();
-    }
+    
     // main loop
     OS_Simulator(&readyProcesses, &runningProcess);
 

@@ -330,6 +330,7 @@ void set_state(PCB_p pcb, enum state_type type) {
 
 enum state_type get_state(PCB_p pcb) {
     // if (!pcb) return NULL;
+    // need to return something
     return pcb->state;
 }
 
@@ -370,6 +371,7 @@ void setPrivileged(PCB_p pcb) {
 
 // returns the pcbs pc value.
 unsigned int get_pc(PCB_p pcb) {
+	if (!pcb) return -1;
     if(pcb == NULL) return -1;
     if(pcb->context == NULL) return -1;
 

@@ -17,6 +17,7 @@ Changes:
 
 #ifndef PCB_H
 #define PCB_H
+#include <stdio.h>
 
 // Pointer to the cpu_context structure.
 typedef struct CPU_context_s *CPU_context_p;
@@ -36,6 +37,7 @@ PCB_p create_noio_pcb();
 PCB_p create_prod_pcb(int res);
 PCB_p create_cons_pcb(int res);
 PCB_p create_mutual_pcb(int res);
+
 
 /* deconstructor */
 // Deallocates the memory for the pcb passed in.
@@ -116,5 +118,6 @@ const char* get_state_name(enum state_type state);
 void set_pcb_resource(PCB_p pcb, int res);
 
 int get_pcb_resource(PCB_p pcb);
+
 
 #endif

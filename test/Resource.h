@@ -5,7 +5,7 @@
 
 typedef struct Resource_s * Resource_p;
 
-Resource_p create_Resource();
+Resource_p create_resource();
 
 int get(Resource_p res, PCB_p pcb);
 
