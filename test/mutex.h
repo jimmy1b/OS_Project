@@ -13,8 +13,9 @@ int lock(mutex_p mutex, PCB_p pcb);
 
 int trylock(mutex_p mutex);
 
-int unlock(mutex_p mutex, PCB_p pcb);
+int unlock(mutex_p mutex);
 
 int TestAndSet(int *old_ptr, int new);
 
 #endif // MUTEX_H
+ 
