@@ -189,6 +189,7 @@ PCB_p create_prod_pcb(int res) {
     if (pcb) {
         pcb->resource = res;
         pcb->type = producer;
+        pcb->terminate = 0;
     }
     return pcb;
 }
@@ -198,6 +199,7 @@ PCB_p create_cons_pcb(int res) {
     if (pcb) {
         pcb->resource = res;
         pcb->type = consumer;
+        pcb->terminate = 0;
     }
     return pcb;
 }
@@ -207,6 +209,7 @@ PCB_p create_mutual_pcb(int res) {
     if (pcb) {
         pcb->resource = res;
         pcb->type = mutual;
+        pcb->terminate = 0;
     }
     return pcb;
 }

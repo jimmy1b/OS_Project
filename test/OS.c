@@ -762,5 +762,10 @@ int main() {
     destroy(IO2Queue);
     destroy_pcb(IO1Process);
     destroy_pcb(IO2Process);
+    for(int i = 0; i < 10; i++) {
+        destroy_resource(prodConR[i]);
+        destroy_resource(mutualR1[i]);
+        destroy_resource(mutualR2[i]);
+    }
     pthread_exit(NULL);
 }
