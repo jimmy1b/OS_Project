@@ -9,6 +9,8 @@ enum lock_state {locked, unlocked};
 
 mutex_p create_mutex();
 
+int destroy_mutex(mutex_p mutex);
+
 int lock(mutex_p mutex, PCB_p pcb);
 
 int trylock(mutex_p mutex);

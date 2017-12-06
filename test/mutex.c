@@ -25,6 +25,14 @@ mutex_p create_mutex() {
     }
 }
 
+int destroy_mutex(mutex_p mutex) {
+    if(!mutex) return -1;
+    destroy_pcb(mutex->pcb);
+    destroy(mutex->waiting_q);
+    free(mutex);
+    return 0;
+}
+
 //Locks mutex.
 //Do threads acquire locks or processes?
 //Returns 0 if put to waiting Queue.

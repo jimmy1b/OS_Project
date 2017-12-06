@@ -6,7 +6,7 @@
 
 struct Resource_s {
     mutex_p mutex;
-     unsigned int data;
+    unsigned int data;
 
 } Resource_s;
 
@@ -20,6 +20,13 @@ Resource_p create_resource() {
         return res;
     }
 } 
+
+int destroy_resource(Resource_p res) {
+    if(!res) return -1;
+    destroy_mutex(res->mutex);
+    free(res);
+    return 0;
+}
 
 // return 0 if able to lock, -1 if not
 int get(Resource_p res, PCB_p pcb) {
