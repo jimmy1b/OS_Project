@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "mutex.h"
+#include "pcb.h"
 #include "Resource.h"
 
 struct Resource_s {
@@ -10,7 +11,7 @@ struct Resource_s {
 } Resource_s;
 
 Resource_p create_resource() {
-    Resource_p res = (resource_p) malloc(sizeof(Resource_s));
+    Resource_p res = (Resource_p) malloc(sizeof(Resource_s));
     if (!res) {
         return NULL;
     } else {
@@ -27,7 +28,7 @@ int get(Resource_p res, PCB_p pcb) {
         unlock(res->mutex);
         return result;
     } else {
-        return -1
+        return -1;
     }
 }
 
@@ -38,6 +39,6 @@ int put (Resource_p res, PCB_p pcb, int new_data) {
         unlock(res->mutex);
         return 0;
     } else {
-        return -1
+        return -1;
     }
 }

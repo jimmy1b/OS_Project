@@ -20,6 +20,9 @@ Alisher Baimenov
 // value to denote a successful function return
 #define SUCCESSFUL 0
 
+// value to denote a successful function return
+#define FAILED 1
+
 // Maximum size used for an ouput buffer string
 #define MAX_BUFFER_SIZE 1024
 

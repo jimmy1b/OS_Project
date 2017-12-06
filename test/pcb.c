@@ -263,7 +263,7 @@ void set_type(PCB_p pcb, enum pcb_type new_type) {
 }
 
 enum pcb_type get_type(PCB_p pcb) {
-    if(pcb == NULL) return NULL;
+    // if(pcb == NULL) return NULL;
     return pcb->type;
 }
 
@@ -290,7 +290,7 @@ unsigned int get_max_pc(PCB_p pcb) {
 
 //Returns time of creation of pcb.
 int get_creation_sec(PCB_p pcb) {
-    if (!pcb) return;
+    if (!pcb) return -1;
     return (pcb->creation).tm_sec;
 }
 
@@ -329,7 +329,7 @@ void set_state(PCB_p pcb, enum state_type type) {
 }
 
 enum state_type get_state(PCB_p pcb) {
-    if (!pcb) return NULL;
+    // if (!pcb) return NULL;
     return pcb->state;
 }
 
@@ -407,7 +407,7 @@ void print_pcb(PCB_p pcb){
 }
 
 void print_context(CPU_context_p context, FILE * fp) {
-    if (!pcb) return;
+    if (!context) return;
     fprintf(fp, "Context Data: [pc: %u, ir: %u, psr: %u, r0: %u, r1: %u, r2: %u, r3: %u, r4: %u, r5: %u, r6: %u, r7: %u]\n",
            context->pc, context->ir, context->psr, context->r0, context->r1, context->r2, context->r3,
            context->r4, context->r5, context->r6, context->r7);

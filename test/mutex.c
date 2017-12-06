@@ -40,7 +40,7 @@ int lock(mutex_p mutex, PCB_p pcb) {
             mutex->state = locked;
             return 1;
         } else {
-            fifo_enqueue(mutex, pcb);
+            fifo_enqueue(mutex->waiting_q, pcb);
             set_state(pcb, waiting);
             return 0;
         }

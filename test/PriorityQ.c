@@ -96,10 +96,10 @@ void print_priority_queue(PriorityQ_p queue) {
 void destroy_pq(PriorityQ_p queue) {
 	while(pq_isEmpty(queue))
 	{
-		pcb = pq_dequeue(queue);
+		PCB_p pcb = pq_dequeue(queue);
 		destroy_pcb(pcb);
 	}
-	for(i = 0; i <= MAX_PRIORITY; i++)
+	for(int i = 0; i <= MAX_PRIORITY; i++)
 	{
 		FIFO_Queue_p fifo = queue->priorities[i];
 		destroy(fifo);

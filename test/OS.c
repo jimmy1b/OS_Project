@@ -518,7 +518,7 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
         sysStack = get_pc(*runningProcess);
         return SUCCESSFUL;
     } else {
-        return FAILED
+        return FAILED;
     }
     //printf("Check4\n");
 
@@ -740,9 +740,9 @@ int main() {
     int IO2threadcreated = pthread_create(&IO2Thread, NULL, IO2Func, (void*)runningProcess);
 
     for(int i = 0; i < 10; i++) {
-		prodConR[i] = create_resource();
-		mutualR1[i] = create_resource();
-		mutualR2[i] = create_resource();
+		prodConR[i] = create_Resource();
+		mutualR1[i] = create_Resource();
+		mutualR2[i] = create_Resource();
     }
     // main loop
     OS_Simulator(&readyProcesses, &runningProcess);
