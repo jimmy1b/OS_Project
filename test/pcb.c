@@ -65,6 +65,7 @@ struct PCB_s {
     enum pcb_type type;
     //enum pcb_type type;
     int resource;
+    int pair; //
 } PCB_s;
 
 /* constructor */
@@ -98,6 +99,7 @@ PCB_p create_pcb() {
         pcb->privileged = 0;
         pcb->type = normal;
         pcb->resource = 0;
+        pcb->pair = 0;
         //pcb->max_pc = 2345;
         pcb->t = time(NULL);
         pcb->creation = *localtime(&(pcb->t));
@@ -163,6 +165,7 @@ PCB_p create_noio_pcb() {
         pcb->privileged = 0;
         pcb->type = noio;
         pcb->resource = 0;
+        pcb->pair = 0;
         //pcb->max_pc = 2345;
         pcb->t = time(NULL);
         pcb->creation = *localtime(&(pcb->t));
@@ -204,11 +207,12 @@ PCB_p create_cons_pcb(int res) {
     return pcb;
 }
 
-PCB_p create_mutual_pcb(int res) {
+PCB_p create_mutual_pcb(int res, int pNum) {
     PCB_p pcb = create_pcb();
     if (pcb) {
         pcb->resource = res;
         pcb->type = mutual;
+        pcb->pair = pNum;
         pcb->terminate = 0;
     }
     return pcb;
@@ -266,8 +270,13 @@ void set_type(PCB_p pcb, enum pcb_type new_type) {
 }
 
 enum pcb_type get_type(PCB_p pcb) {
-    // if(pcb == NULL) return NULL;
+    if(pcb == NULL) return normal;
     return pcb->type;
+}
+
+int get_pair(PCB_p) {
+    if (!pcb) return -1;
+    return pcb->pair;
 }
 
 void set_pcb_resource(PCB_p pcb, int res) {
@@ -427,4 +436,4 @@ const char* get_state_name(enum state_type state) {
         case waiting: return "Waiting";
         case halted: return "Halted";
     }
-  }
+}

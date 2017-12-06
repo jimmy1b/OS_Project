@@ -16,6 +16,10 @@ Resource_p create_resource() {
         return NULL;
     } else {
         res->mutex = create_mutex();
+        if(!res->mutex) {
+            free(res);
+            return NULL;
+        }
         res->data = 0;
         return res;
     }
@@ -29,23 +33,34 @@ int destroy_resource(Resource_p res) {
 }
 
 // return 0 if able to lock, -1 if not
-int get(Resource_p res, PCB_p pcb) {
-    if (lock(res->mutex, pcb) == 1) {
-        int result = res->data;
-        unlock(res->mutex);
-        return result;
-    } else {
-        return -1;
-    }
+int get(Resource_p res) {
+    int result = res->data;
+    return result;
 }
 
+// // return 0 if able to lock, -1 if not
+// int get(Resource_p res, PCB_p pcb) {
+//     if (lock(res->mutex, pcb) == 1) {
+//         int result = res->data;
+//         unlock(res->mutex, pcb);
+//         return result;
+//     } else {
+//         return -1;
+//     }
+// }
+
 // return 0 if able to lock, -1 if not
-int put (Resource_p res, PCB_p pcb, int new_data) {
-    if (lock(res->mutex, pcb) == 1) {
-        res->data = new_data;
-        unlock(res->mutex);
-        return 0;
-    } else {
-        return -1;
-    }
+void put(Resource_p res, int new_data) {
+    res->data = new_data;
 }
+
+// // return 0 if able to lock, -1 if not
+// int put(Resource_p res, PCB_p pcb, int new_data) {
+//     if (lock(res->mutex, pcb) == 1) {
+//         res->data = new_data;
+//         unlock(res->mutex, pcb);
+//         return 0;
+//     } else {
+//         return -1;
+//     }
+// }

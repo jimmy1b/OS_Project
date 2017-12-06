@@ -28,7 +28,7 @@ unsigned int processCounter;
 unsigned int noIOCounter;
 unsigned int prodConCounter;
 unsigned int mutualCounter;
-int thePriority, theTime, IO1time, IO2time, IO1priority, IO2Priority;
+int thePriority, theTime, IO1time, IO2time, IO1priority, IO2Priority, deadlock;
 
 PCB_p IO1Process;
 PCB_p IO2Process;
@@ -127,7 +127,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    	break;
 		    }
 
-        if (b == 1 && IO2Process != NULL) {
+            if (b == 1 && IO2Process != NULL) {
 //printf("Check21\n");
 		    	//throw io 2 interrupt
                 printf("yeayea14\n");
@@ -144,6 +144,45 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
 		    	break;
 		    }
+
+            done = 0;
+            while(!done) {
+                //producer function
+                if(get_type(*runningProcess) == producer) {
+                    int r = get_pcb_resource(*runningProcess);
+                    if(lock(prodConR[r]->mutex, *runningProcess) == 1) {
+                        if(checkTime()) break;
+                        put(prodConR[r], get_pc(*runningProcess));
+                        if(checkTime()) break;
+                        unlock(prodConR[r]->mutex, *runningProcess)
+                        printf("%d: put data:%d\n", get_pid(*runningProcess), get_pc(*runningProcess));
+                    }
+
+                //consumer function
+                } else if(get_type(*runningProcess) == consumer) {
+                    int r = get_pcb_resource(*runningProcess);
+                    if(lock(prodConR[r]->mutex, *runningProcess) == 1) {
+                        if(checkTime()) break;
+                        int g = get(prodConR[get_pcb_resource(*runningProcess)], *runningProcess);
+                        if(checkTime()) break;
+                        unlock(prodConR[r]->mutex, *runningProcess)
+                        printf("%d: get data:%d\n", get_pid(*runningProcess), g);
+                    }
+
+                //mutual exclusive process function
+                } else if(get_type(*runningProcess) == mutual) {
+                    //deadlock
+                    if(deadlock) {
+                        printf("yes\n");
+
+                    //no deadlock
+                    } else {
+                        printf("no\n");
+
+                    }
+                }
+                done = 1;
+            }
 
             //IO Trap
             int iotrap = io_contains_pc(*runningProcess);
@@ -596,9 +635,9 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
 	} else if (type == 3) {
 		for(i = 0; i < rand() % 3; i++) {
 			if(mutualCounter < 10) {
-                PCB_p pcb1 = create_prod_pcb(mutualCounter);
+                PCB_p pcb1 = create_prod_pcb(mutualCounter, 0);
                 fifo_enqueue(newProcesses, pcb1);
-                PCB_p pcb2 = create_cons_pcb(mutualCounter);
+                PCB_p pcb2 = create_cons_pcb(mutualCounter, 1);
                 fifo_enqueue(newProcesses, pcb2);
                 mutualCounter++;
             } else {
@@ -629,12 +668,21 @@ void *timerFunc(void *t) {
     nanosleep(&timing, NULL);
 
     //printf(" TIMER\n");
-    pthread_mutex_trylock(&timerMutex);
+    pthread_mutex_lock(&timerMutex);
     theTime = 1;
     pthread_mutex_unlock(&timerMutex);
 
   }
 
+
+}
+
+int checkTime() {
+
+    pthread_mutex_trylock(&timerMutex);
+    int b = theTime;
+    pthread_mutex_unlock(&timerMutex);
+    return b;
 
 }
 void *IO1Func(void *t) {
@@ -741,6 +789,7 @@ int main() {
         mutualR2[i] = create_resource();
     }
 
+    deadlock = 0;
     currentPC = 0;
     sysStack = 0;
     dispatchCount = 0;

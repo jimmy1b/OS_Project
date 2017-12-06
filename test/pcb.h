@@ -57,6 +57,12 @@ void set_pid(PCB_p pcb, unsigned int num);
 // Returns the pid of the pcb.
 unsigned int get_pid(PCB_p pcb);
 
+void set_type(PCB_p pcb, enum pcb_type new_type);
+
+enum pcb_type get_type(PCB_p pcb);
+
+int get_pair(PCB_p);
+
 //Returns second of creation of pcb.
 int get_creation_sec(PCB_p pcb);
 
