@@ -7,6 +7,8 @@ typedef struct Resource_s * Resource_p;
 
 Resource_p create_resource();
 
+int destroy_resource(Resource_p res);
+
 int get(Resource_p res, PCB_p pcb);
 
 int put (Resource_p res, PCB_p pcb, int new_data);
