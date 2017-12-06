@@ -14,6 +14,7 @@ Alisher Baimenov
 #include "OS.h"
 #define PROCESSNUMBER 45
 #define NOIOPROCESSNUMBER 20
+#define RESOURCEPROCESSNUMBER 10
 #define NANO_SECOND_MULTIPLIER  1000000  // 1 millisecond = 1,000,000 Nanoseconds
 
 unsigned int sysStack;
@@ -25,6 +26,8 @@ unsigned int quantum;
 unsigned int quantumCounter;
 unsigned int processCounter;
 unsigned int noIOCounter;
+unsigned int prodConCounter;
+unsigned int mutualCounter;
 int thePriority, theTime, IO1time, IO2time, IO1priority, IO2Priority;
 
 PCB_p IO1Process;
@@ -33,7 +36,6 @@ FIFO_Queue_p IO1Queue;
 FIFO_Queue_p IO2Queue;
 
 FIFO_Queue_p newProcesses;
-FIFO_Queue_p newNoIos;
 FIFO_Queue_p dieingProcesses;
 pthread_mutex_t priorityMutex;
 
@@ -59,15 +61,9 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
     // One cycle is one quantum
     for( ; ; ) { // for spider
 
+        //makes new processes, puts them into newProcesses queue
         // stops making processes after 48 and if there are at least 4 Privileged pcbs
-        if(processCounter <= PROCESSNUMBER) {// && privilegedCount < 4) {
-            createNewProcesses(newProcesses, 0);
-            processCounter += fifo_size(newProcesses);
-        }
-        if(noIOCounter <= NOIOPROCESSNUMBER) {
-          createNewProcesses(newNoIos, 1);
-          noIOCounter += fifo_size(newNoIos);
-        }
+        prepareNewProcesses(); 
 
         for( ; ; ) {
 
@@ -427,15 +423,6 @@ printf("interrupt is: %d\n", interrupt);
             // enqueue
             pq_enqueue(*readyProcesses, pcb);
         }
-    while(!fifo_is_empty(newNoIos)) {
-
-            // dequeue and print next pcb
-            PCB_p pcb = fifo_dequeue(newNoIos);
-            set_state(pcb, ready);
-
-                // enqueue
-            pq_enqueue(*readyProcesses, pcb);
-        }
 
     // housekeeping if needed
     // If there are 4 terminated processes, clear them now.
@@ -536,6 +523,25 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     return SUCCESSFUL;
 }
 
+void prepareNewProcesses() {
+    if(processCounter <= PROCESSNUMBER) {// && privilegedCount < 4) {
+        createNewProcesses(newProcesses, 0);
+        processCounter += fifo_size(newProcesses);
+    }
+
+    if(noIOCounter <= NOIOPROCESSNUMBER) {
+        createNewProcesses(newProcesses, 1);
+    }
+
+    if(prodConCounter < RESOURCEPROCESSNUMBER) {
+        createNewProcesses(newProcesses, 2);
+    }
+
+   if(mutualCounter < RESOURCEPROCESSNUMBER) {
+        createNewProcesses(newProcesses, 3);
+    } 
+}
+
 void moveProcesses (PriorityQ_p * readyProcesses) {
     FIFO_Queue_p save = create_fifo_queue();
 
@@ -571,33 +577,33 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
 		for(i = 0; i < rand() % 5; i++) {
 			PCB_p pcb = create_noio_pcb();
             fifo_enqueue(newProcesses, pcb);
+            noIOCounter++;
 		}
 		// producer, consumer pairs
 	} else if (type == 2) {
-		for(i = 0; i < 10; i++) {
-			PCB_p pcb1 = create_prod_pcb(i);
-			fifo_enqueue(newProcesses, pcb1);
-			PCB_p pcb2 = create_cons_pcb(i);
-			fifo_enqueue(newProcesses, pcb2);
-
-
-
-          // 20% chance that the pcb will become privileged.
-          /*if(rand() % 100 < 20 ) {//&& privilegedCount < 4)  {
-              setPrivileged(pcb);
-              privilegedPCBs[privilegedCount] = pcb;
-              privilegedCount++;
-          })*/
+		for(i = 0; i < rand() % 3; i++) {
+            if(prodConCounter < 10) {
+                PCB_p pcb1 = create_prod_pcb(prodConCounter);
+                fifo_enqueue(newProcesses, pcb1);
+                PCB_p pcb2 = create_cons_pcb(prodConCounter);
+                fifo_enqueue(newProcesses, pcb2);
+                prodConCounter++;
+            } else {
+                break;
+            }
 		}
-
 		// mutual resource pairs
 	} else if (type == 3) {
-		for(i = 0; i < 10; i++) {
-			PCB_p pcb1 = create_mutual_pcb(i);
-			fifo_enqueue(newProcesses, pcb1);
-			PCB_p pcb2 = create_mutual_pcb(i);
-			fifo_enqueue(newProcesses, pcb2);
-
+		for(i = 0; i < rand() % 3; i++) {
+			if(mutualCounter < 10) {
+                PCB_p pcb1 = create_prod_pcb(mutualCounter);
+                fifo_enqueue(newProcesses, pcb1);
+                PCB_p pcb2 = create_cons_pcb(mutualCounter);
+                fifo_enqueue(newProcesses, pcb2);
+                mutualCounter++;
+            } else {
+                break;
+            }
 		}
 	}
 }
@@ -715,7 +721,6 @@ int main() {
 
     // Initialize Vars
     newProcesses = create_fifo_queue();
-    newNoIos = create_fifo_queue();
     PriorityQ_p readyProcesses = create_pq();
 
     PCB_p runningProcess = NULL;
@@ -742,7 +747,10 @@ int main() {
     privilegedCount = 0;
     quantum = 3 * getCyclesFromPriority(7); // multiple of middle queues quantum size.
     quantumCounter = quantum;
-    processCounter = 1;
+    processCounter = 0;
+    noIOCounter = 0;
+    prodConCounter = 0;
+    mutualCounter = 0;
     //create threads
 
     int timerthreadcreated = pthread_create(&timerThread, NULL, timerFunc, NULL);

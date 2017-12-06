@@ -38,6 +38,9 @@ int scheduler(PriorityQ_p *, PCB_p* , int);
 // Dispatches the next ready process and enqueues the old process.
 int dispatcher(PriorityQ_p *, PCB_p*);
 
+// calls createNewProcesses for each type of process if neeeded
+void prepareNewProcesses();
+
 // Creates a random number (0 - 5) of processes.
 int createNewProcesses(FIFO_Queue_p, int);
 
