@@ -42,7 +42,10 @@ int pq_isEmpty(PriorityQ_p queue)
 
 /*Returns number of elements in this Priority Queue.*/
 unsigned int pq_size(PriorityQ_p queue) {
-	return queue->count;
+	// return queue->count;
+	unsigned int size = 0;
+	for (int i = 0; i <= MAX_PRIORITY; i++) size += fifo_size(queue->priorities[i]);
+	return size;
 }
 
 /*Adds given pcb to the Priority Queue.*/
