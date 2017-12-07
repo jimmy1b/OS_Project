@@ -769,20 +769,29 @@ int main() {
 
     // main loop
     OS_Simulator(&readyProcesses, &runningProcess);
+    pthread_exit(NULL);
 
     // free resources
+    printf("free\n");
     destroy(newProcesses);
+    printf("free\n");
     destroy(dieingProcesses);
+    printf("free\n");
     destroy_pq(readyProcesses);
+    printf("free\n");
     destroy_pcb(runningProcess);
+    printf("free\n");
     destroy(IO1Queue);
+    printf("free\n");
     destroy(IO2Queue);
+    printf("free\n");
     destroy_pcb(IO1Process);
+    printf("free\n");
     destroy_pcb(IO2Process);
+    printf("free\n");
     for(i = 0; i < 10; i++) {
         destroy_resource(prodConR[i]);
         destroy_resource(mutualR1[i]);
         destroy_resource(mutualR2[i]);
     }
-    pthread_exit(NULL);
 }
