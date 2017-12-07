@@ -106,10 +106,11 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    	//throw io 1 interrupt
                 set_state(IO1Process, ready);
                 scheduler(readyProcesses, &IO1Process, get_state(IO1Process));
-                // if(!fifo_is_empty){
-                //   IO1Process = fifo_dequeue(IO1Queue);
-                // }
-                printf("\nIO1QUEUE is: ");
+                 if(!fifo_is_empty){
+                   IO1Process = fifo_dequeue(IO1Queue);
+                 }
+                printf("\n");
+                printf("IO1QUEUE is: ");
                 print_fifo_queue(IO1Queue);
                 pseudoISR(readyProcesses, runningProcess);
 		    	break;
@@ -117,13 +118,14 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
             if (b == 1 && IO2Process != NULL) {
 		    	//throw io 2 interrupt
-                printf("yeayea14\n");
+
                 print_fifo_queue(IO2Queue);
                 set_state(IO2Process, ready);
                 scheduler(readyProcesses, &IO2Process, get_state(IO2Process));
                 if(!fifo_is_empty){
                   IO2Process = fifo_dequeue(IO2Queue);
                 }
+                printf("\n");
                 printf("IO2QUEUE is: ");
                 print_fifo_queue(IO2Queue);
                 pseudoISR(readyProcesses, runningProcess);
@@ -203,7 +205,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
             //IO Trap
             int iotrap = io_contains_pc(*runningProcess);
-            printf("iotrap is: %d\n", iotrap);
+            //printf("iotrap is: %d\n", iotrap);
             //assert(IO1Process != NULL);
             //assert(IO2Process != NULL);
             if (iotrap == 1) {
@@ -218,12 +220,13 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                     IO1time = 0;
                     pthread_mutex_unlock(&Io1Mutex);
                 }
-                scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
-
                 printf("printing IO1QUEUE:");
                 print_fifo_queue(IO1Queue);
 
-                printf("Check22\n");
+                scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
+
+
+                //printf("Check22\n");
 
                 //print_priority_queue(*readyProcesses);
                 break;
@@ -243,7 +246,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 printf("PRINTING IO2QUEUE:");
                 print_fifo_queue(IO2Queue);
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
-                printf("Check23\n");
+                //printf("Check23\n");
 
 
                 //print_priority_queue(*readyProcesses);
@@ -336,16 +339,16 @@ int pseudoISR(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
 
     // Sets the status to interrupted.
     set_state(*runningProcess, interrupted);
-//printf("Check6\n");
+
     sysStack = get_pc(*runningProcess);
-//printf("Check50\n");
+
     // save pc to pcb
     //set_pc(*runningProcess, sysStack);
-//printf("Check51\n");
+
     // scheduler up call
-    printf("yea14\n");
+    //printf("yea14\n");
     scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
-//printf("Check52\n");
+
     // IRET (update current pc)
     //currentPC = sysStack;
 //printf("Check11\n");
@@ -666,11 +669,11 @@ void *IO1Func(void *t) {
       int length = ((rand() % 3) + 2) * 3 * getCyclesFromPriority(7) * NANO_SECOND_MULTIPLIER * 1000;
     // * NANO_SECOND_MULTIPLIER/ 10000);
 
-      timing.tv_sec = 11;
+      timing.tv_sec = 1;
       timing.tv_nsec = length;
       nanosleep(&timing, NULL);
 
-      printf(" IO1\n");
+      //printf(" IO1\n");
       pthread_mutex_lock(&Io1Mutex);
       IO1time = 1;
 
@@ -690,7 +693,7 @@ void *IO2Func(void *t) {
     pthread_mutex_unlock(&Io2Mutex);// * NANO_SECOND_MULTIPLIER/ 10000);
     if(ioval == 0) {
       int length = ((rand() % 3) + 2) * 3 * getCyclesFromPriority(7) * NANO_SECOND_MULTIPLIER;
-      timing.tv_sec = 5;
+      timing.tv_sec = 1;
       timing.tv_nsec = length;
       nanosleep(&timing, NULL);
       printf(" IO2\n");
