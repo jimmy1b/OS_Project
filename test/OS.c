@@ -211,7 +211,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
             //assert(IO1Process != NULL);
             //assert(IO2Process != NULL);
             if (iotrap == 1) {
-                //printf("IO1\n");
+                printf("IO1\n");
                 set_state(*runningProcess, waiting);
                 if (IO1Process != NULL) {
                     fifo_enqueue(IO1Queue, *runningProcess);
@@ -234,7 +234,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 //print_priority_queue(*readyProcesses);
                 break;
             } else if (iotrap == 2) {
-                //printf("IO2\n");
+                printf("IO2\n");
                 set_state(*runningProcess, waiting);
 
                 if (IO2Process != NULL) {
