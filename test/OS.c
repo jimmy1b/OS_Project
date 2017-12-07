@@ -82,8 +82,15 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
             if (t == 1) {
                 quantumCounter--;
 
-                printf("Timer\n\n");
-                print_pq(*readyProcesses);
+                if (iteration % 25 == 0) {
+                    printf("\n\nTimer interrupt\n");
+                    printf("%d\n", iteration);
+                    print_pq(*readyProcesses);
+                    printf("\n");
+                    deadlockMonitor();
+                    printf("\n");
+
+                }
                 pthread_mutex_trylock(&timerMutex);
                 theTime = 0;
 
@@ -110,9 +117,9 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 set_state(IO1Process, ready);
                 scheduler(readyProcesses, &IO1Process, get_state(IO1Process));
                 IO1Process = fifo_dequeue(IO1Queue);
-                printf("\n");
-                printf("IO1QUEUE is: ");
-                print_fifo_queue(IO1Queue);
+                //printf("\n");
+                //printf("IO1QUEUE is: ");
+                //print_fifo_queue(IO1Queue);
                 pseudoISR(readyProcesses, runningProcess);
 		    	break;
 		    }
@@ -120,13 +127,13 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
             if (b == 1 && IO2Process != NULL) {
 		    	//throw io 2 interrupt
 
-                print_fifo_queue(IO2Queue);
+                //print_fifo_queue(IO2Queue);
                 set_state(IO2Process, ready);
                 scheduler(readyProcesses, &IO2Process, get_state(IO2Process));
                 IO2Process = fifo_dequeue(IO2Queue);
-                printf("\n");
-                printf("IO2QUEUE is: ");
-                print_fifo_queue(IO2Queue);
+                //printf("\n");
+                //printf("IO2QUEUE is: ");
+                //print_fifo_queue(IO2Queue);
                 pseudoISR(readyProcesses, runningProcess);
 		    	break;
 		    }
@@ -212,7 +219,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
             //assert(IO1Process != NULL);
             //assert(IO2Process != NULL);
             if (iotrap == 1) {
-                printf("IO1\n");
+                printf("\nIO1 interrupt\n");
                 set_state(*runningProcess, waiting);
                 if (IO1Process != NULL) {
                     fifo_enqueue(IO1Queue, *runningProcess);
@@ -226,6 +233,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 *runningProcess = NULL;
                 printf("printing IO1QUEUE:");
                 print_fifo_queue(IO1Queue);
+                printf("\n\n");
 
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
 
@@ -235,7 +243,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 //print_priority_queue(*readyProcesses);
                 break;
             } else if (iotrap == 2) {
-                printf("IO2\n");
+                printf("\nIO2 interrupt\n");
                 set_state(*runningProcess, waiting);
 
                 if (IO2Process != NULL) {
@@ -250,6 +258,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 *runningProcess = NULL;
                 printf("PRINTING IO2QUEUE:");
                 print_fifo_queue(IO2Queue);
+                printf("\n");
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
                 //printf("Check23\n");
 
@@ -269,9 +278,6 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                     break;
                 }
             }
-        }
-        if (deadlockMonitor() != 0) {
-            printf("THERE IS A DEADLOCK\n");
         }
 
 		iteration ++;
@@ -293,6 +299,7 @@ int deadlockMonitor() {
             && get_mutex_pcb(getMutex(mutualR2[i])) != NULL
             && (get_pid(get_mutex_pcb(getMutex(mutualR1[i]))) !=
                 get_pid(get_mutex_pcb(getMutex(mutualR2[i]))))){
+                printf("Deadlock detected for mutual resource processes pid:%d and pid:%d\n", get_pid(get_mutex_pcb(getMutex(mutualR1[i]))), get_pid(get_mutex_pcb(getMutex(mutualR2[i]))));
                 count++;
             }
     }
@@ -763,7 +770,7 @@ int main() {
     }
 
 
-    deadlock = 0;
+    deadlock = 1;
     currentPC = 0;
     sysStack = 0;
     dispatchCount = 0;
