@@ -40,6 +40,8 @@ int dispatcher(PriorityQ_p *, PCB_p*);
 
 // calls createNewProcesses for each type of process if neeeded
 void prepareNewProcesses();
+// checks for deadlock and how many have occured.
+int deadlockMonitor();
 
 // Creates a random number (0 - 5) of processes.
 int createNewProcesses(FIFO_Queue_p, int);
