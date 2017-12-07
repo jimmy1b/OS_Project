@@ -209,7 +209,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
             //assert(IO1Process != NULL);
             //assert(IO2Process != NULL);
             if (iotrap == 1) {
-                printf("IO1\n");
+                //printf("IO1\n");
                 set_state(*runningProcess, waiting);
                 if (IO1Process != NULL) {
                     fifo_enqueue(IO1Queue, *runningProcess);
@@ -669,7 +669,7 @@ void *IO1Func(void *t) {
       int length = ((rand() % 3) + 2) * 3 * getCyclesFromPriority(7) * NANO_SECOND_MULTIPLIER * 1000;
     // * NANO_SECOND_MULTIPLIER/ 10000);
 
-      timing.tv_sec = 1;
+      timing.tv_sec = 3;
       timing.tv_nsec = length;
       nanosleep(&timing, NULL);
 
@@ -693,7 +693,7 @@ void *IO2Func(void *t) {
     pthread_mutex_unlock(&Io2Mutex);// * NANO_SECOND_MULTIPLIER/ 10000);
     if(ioval == 0) {
       int length = ((rand() % 3) + 2) * 3 * getCyclesFromPriority(7) * NANO_SECOND_MULTIPLIER;
-      timing.tv_sec = 1;
+      timing.tv_sec = 3;
       timing.tv_nsec = length;
       nanosleep(&timing, NULL);
       printf(" IO2\n");
