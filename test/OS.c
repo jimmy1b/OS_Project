@@ -520,7 +520,7 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
         // printf("size of PQ is: %d\n", pq_size(*readyProcesses));
     }
     *runningProcess = pq_dequeue(*readyProcesses);
-    pthread_mutex_lock(&priorityMutex);
+    pthread_mutex_trylock(&priorityMutex);
     thePriority = get_priority(*runningProcess);
     pthread_mutex_unlock(&priorityMutex);
 
@@ -671,7 +671,7 @@ void *IO1Func(void *t) {
   //timer startup
   for(;;) {
     int ioval = 1;
-    pthread_mutex_lock(&Io1Mutex);
+    pthread_mutex_trylock(&Io1Mutex);
     ioval = IO1time;
     //printf("ioval is: %d\n", ioval);
 
@@ -685,7 +685,7 @@ void *IO1Func(void *t) {
       nanosleep(&timing, NULL);
 
       //printf(" IO1\n");
-      pthread_mutex_lock(&Io1Mutex);
+      pthread_mutex_trylock(&Io1Mutex);
       IO1time = 1;
 
       pthread_mutex_unlock(&Io1Mutex);
@@ -798,8 +798,9 @@ int main() {
     printf("free\n");
     destroy_pcb(IO2Process);
     printf("free\n");
-    for(i = 0; i < 10; i++) {
+    for(i = 0; i < mutualCounter; i++) {
         destroy_resource(prodConR[i]);
+
         destroy_resource(mutualR1[i]);
         destroy_resource(mutualR2[i]);
     }
