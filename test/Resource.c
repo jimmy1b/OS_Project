@@ -38,6 +38,11 @@ int get(Resource_p res) {
     return result;
 }
 
+int increment(Resource_p res) {
+    int result = res->data++;
+    return result;
+}
+
 // // return 0 if able to lock, -1 if not
 // int get(Resource_p res, PCB_p pcb) {
 //     if (lock(res->mutex, pcb) == 1) {

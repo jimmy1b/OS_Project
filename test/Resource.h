@@ -11,6 +11,9 @@ int destroy_resource(Resource_p res);
 
 int get(Resource_p res);
 
+int increment(Resource_p res);
+
+//no
 void put (Resource_p res, int new_data);
 
 mutex_p getMutex(Resource_p res);
