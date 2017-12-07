@@ -117,13 +117,14 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    if (a == 1 && IO1Process != NULL) {
 //printf("Check20\n");
 		    	//throw io 1 interrupt
+                printf("IO1QUEUE is: \n");
+                print_fifo_queue(IO1Queue);
                 set_state(IO1Process, ready);
                 scheduler(readyProcesses, &IO1Process, get_state(IO1Process));
-                // if(!fifo_is_empty){
-                //   IO1Process = fifo_dequeue(IO1Queue);
-                // }
-                printf("\nIO1QUEUE is: ");
-                print_fifo_queue(IO1Queue);
+                if(!fifo_is_empty){
+                  IO1Process = fifo_dequeue(IO1Queue);
+                }
+
                 pseudoISR(readyProcesses, runningProcess);
 //printf("Check5\n");
 
@@ -132,16 +133,16 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
             if (b == 1 && IO2Process != NULL) {
 //printf("Check21\n");
-		    	//throw io 2 interrupt
-                printf("yeayea14\n");
+		    	//throw io 2/ interrupt
+                printf("IOQueue 2 is : \n");
                 print_fifo_queue(IO2Queue);
                 set_state(IO2Process, ready);
                 scheduler(readyProcesses, &IO2Process, get_state(IO2Process));
                 if(!fifo_is_empty){
                   IO2Process = fifo_dequeue(IO2Queue);
                 }
-                printf("IO2QUEUE is: ");
-                print_fifo_queue(IO2Queue);
+                //printf("IO2QUEUE is: ");
+                //print_fifo_queue(IO2Queue);
                 pseudoISR(readyProcesses, runningProcess);
 //printf("Check6\n");
 
@@ -417,7 +418,7 @@ int pseudoISR(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     //set_pc(*runningProcess, sysStack);
 //printf("Check51\n");
     // scheduler up call
-    printf("yea14\n");
+    //printf("yea14\n");
     scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
 //printf("Check52\n");
     // IRET (update current pc)
@@ -576,7 +577,7 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
     // dequeue
     printf("size of PQ is: %d\n", pq_size(*readyProcesses));
 
-    if (pq_size(*readyProcesses) == 0) {
+    if (pq_size(*readyProcesses) == 0 && processCounter < 5) {
             //PQ is empty...What should we do?
         pq_enqueue(*readyProcesses, create_pcb());
     }
@@ -654,15 +655,22 @@ int createNewProcesses(FIFO_Queue_p newProcesses, int type) {
     int i;
     if (type == 0) {//create normal processes
 		for(i = 0; i < rand() % 5; i++) {
-			PCB_p pcb = create_pcb();
-			fifo_enqueue(newProcesses, pcb);
-      processCounter++;
+      if (processCounter < PROCESSNUMBER) {
+
+          PCB_p pcb = create_pcb();
+          fifo_enqueue(newProcesses, pcb);
+          processCounter++;
+          }
+
         }
     } else if (type == 1) {//create NO IO.
 		for(i = 0; i < rand() % 5; i++) {
-			PCB_p pcb = create_noio_pcb();
-            fifo_enqueue(newProcesses, pcb);
-            noIOCounter++;
+      if(noIOCounter < NOIOPROCESSNUMBER) {
+        PCB_p pcb = create_noio_pcb();
+              fifo_enqueue(newProcesses, pcb);
+              noIOCounter++;
+      }
+
 		}
 		// producer, consumer pairs
 	} else if (type == 2) {
@@ -702,7 +710,7 @@ void *timerFunc(void *t) {
   for(;;) {
     pthread_mutex_lock(&priorityMutex);
 
-    int length = getCyclesFromPriority(thePriority)* NANO_SECOND_MULTIPLIER * 100000;
+    int length = getCyclesFromPriority(thePriority)* NANO_SECOND_MULTIPLIER;
     pthread_mutex_unlock(&priorityMutex);// * NANO_SECOND_MULTIPLIER/ 10000);
     struct timespec timing;
     timing.tv_sec = 0;
@@ -735,16 +743,16 @@ void *IO1Func(void *t) {
   struct timespec timing;
   //timer startup
   for(;;) {
-    pthread_mutex_lock(&Io1Mutex);
+    pthread_mutex_trylock(&Io1Mutex);
     int ioval = IO1time;
     //printf("ioval is: %d\n", ioval);
 
     pthread_mutex_unlock(&Io1Mutex);
     if(ioval == 0 ) {
-      int length = ((rand() % 3) + 2) * 3 * getCyclesFromPriority(7) * NANO_SECOND_MULTIPLIER * 1000;
+      int length = ((rand() % 3) + 2) * 3 * getCyclesFromPriority(7) * NANO_SECOND_MULTIPLIER;
     // * NANO_SECOND_MULTIPLIER/ 10000);
 
-      timing.tv_sec = 11;
+      timing.tv_sec = 1;
       timing.tv_nsec = length;
       nanosleep(&timing, NULL);
 
@@ -774,7 +782,7 @@ void *IO2Func(void *t) {
     pthread_mutex_unlock(&Io2Mutex);// * NANO_SECOND_MULTIPLIER/ 10000);
     if(ioval == 0) {
       int length = ((rand() % 3) + 2) * 3 * getCyclesFromPriority(7) * NANO_SECOND_MULTIPLIER;
-      timing.tv_sec = 5;
+      timing.tv_sec = 1;
       timing.tv_nsec = length;
       nanosleep(&timing, NULL);
       printf(" IO2\n");
