@@ -27,6 +27,7 @@ unsigned int quantumCounter;
 unsigned int processCounter;
 unsigned int noIOCounter;
 unsigned int prodConCounter;
+unsigned int iteration;
 unsigned int mutualCounter;
 int thePriority, theTime, IO1time, IO2time, IO1priority, IO2Priority, deadlock;
 
@@ -53,7 +54,7 @@ Resource_p mutualR2[10];
 int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
 
-    int iteration = 1;
+
     int processed = 0;
     int t, a, b, i, j;
     //startTimer(get_priority(*readyProcesses));
@@ -271,7 +272,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
         if (deadlockMonitor() != 0) {
             printf("THERE IS A DEADLOCK\n");
         }
-        
+
 		iteration ++;
 		//printf("ITERATION IS: %d\n", iteration);
         if (iteration == 10000){
@@ -688,9 +689,12 @@ void *IO1Func(void *t) {
       IO1time = 1;
 
       pthread_mutex_unlock(&Io1Mutex);
+      if (iteration == 10000){
+          break;
+      }
     }
   }
-
+  pthread_exit(NULL);
 
 }
 void *IO2Func(void *t) {
@@ -711,8 +715,12 @@ void *IO2Func(void *t) {
       pthread_mutex_trylock(&Io2Mutex);
       IO2time = 1;
       pthread_mutex_unlock(&Io2Mutex);
+      if (iteration == 10000){
+          break;
+      }
     }
   }
+  pthread_exit(NULL);
 }
 
 // Main, to jump start the OS simulation and initialize variables.
@@ -749,6 +757,7 @@ int main() {
         mutualR2[i] = create_resource();
     }
 
+
     deadlock = 0;
     currentPC = 0;
     sysStack = 0;
@@ -765,11 +774,11 @@ int main() {
     int timerthreadcreated = pthread_create(&timerThread, NULL, timerFunc, NULL);
     int IO1threadcreated = pthread_create(&IO1Thread, NULL, IO1Func, NULL);
     int IO2threadcreated = pthread_create(&IO2Thread, NULL, IO2Func, NULL);
-
+    iteration = 1;
 
     // main loop
     OS_Simulator(&readyProcesses, &runningProcess);
-    pthread_exit(NULL);
+    //pthread_exit(NULL);
 
     // free resources
     printf("free\n");
