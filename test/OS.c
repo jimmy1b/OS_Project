@@ -83,6 +83,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 quantumCounter--;
 
                 printf("Timer\n\n");
+                print_pq(*readyProcesses);
                 pthread_mutex_trylock(&timerMutex);
                 theTime = 0;
 
@@ -684,14 +685,15 @@ void *IO1Func(void *t) {
       timing.tv_nsec = length;
       nanosleep(&timing, NULL);
 
+      if (iteration == 10000){
+          break;
+      }
       //printf(" IO1\n");
       pthread_mutex_trylock(&Io1Mutex);
       IO1time = 1;
 
       pthread_mutex_unlock(&Io1Mutex);
-      if (iteration == 10000){
-          break;
-      }
+      
     }
   }
   pthread_exit(NULL);
@@ -711,7 +713,10 @@ void *IO2Func(void *t) {
       timing.tv_sec = 3;
       timing.tv_nsec = length;
       nanosleep(&timing, NULL);
-      printf(" IO2\n");
+      //(" IO2\n");
+      if (iteration == 10000){
+          break;
+      }
       pthread_mutex_trylock(&Io2Mutex);
       IO2time = 1;
       pthread_mutex_unlock(&Io2Mutex);
@@ -781,27 +786,29 @@ int main() {
     //pthread_exit(NULL);
 
     // free resources
-    printf("free\n");
+    // printf("free\n");
     destroy(newProcesses);
-    printf("free\n");
+    // printf("free\n");
     destroy(dieingProcesses);
-    printf("free\n");
+    // printf("free\n");
     destroy_pq(readyProcesses);
-    printf("free\n");
+    // printf("free\n");
     destroy_pcb(runningProcess);
-    printf("free\n");
+    // printf("free\n");
     destroy(IO1Queue);
-    printf("free\n");
+    // printf("free\n");
     destroy(IO2Queue);
-    printf("free\n");
+    // printf("free\n");
     destroy_pcb(IO1Process);
-    printf("free\n");
+    // printf("free\n");
     destroy_pcb(IO2Process);
     printf("free\n");
-    for(i = 0; i < mutualCounter; i++) {
+    for(int j = 0; j < 10; j++) {
+        printf("fr");
         destroy_resource(prodConR[i]);
-
         destroy_resource(mutualR1[i]);
         destroy_resource(mutualR2[i]);
+        printf("ee\n");
     }
+    printf("freeee\n");
 }
