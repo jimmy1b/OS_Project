@@ -106,7 +106,7 @@ PCB_p create_pcb() {
         //pcb->termination = ???
         //pcb->terminate = 2;
         pcb->term_count = 0;
-        srand(time(NULL));
+//        srand(time(NULL));
         pcb->max_pc = rand() % 4000;
         pcb->terminate = rand() % 10;
         int i;
@@ -172,7 +172,7 @@ PCB_p create_noio_pcb() {
           //pcb->termination = ???
           //pcb->terminate = 2;
         pcb->term_count = 0;
-        srand(time(NULL));
+        //srand(time(NULL));
         pcb->max_pc = rand() % 4000;
         pcb->terminate = rand() % 10;
         int i;

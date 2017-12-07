@@ -33,6 +33,10 @@ int destroy_mutex(mutex_p mutex) {
     return 0;
 }
 
+PCB_p get_mutex_pcb(mutex_p mutex) {
+    return mutex->pcb;
+}
+
 //Locks mutex.
 //Do threads acquire locks or processes?
 //Returns 0 if put to waiting Queue.
