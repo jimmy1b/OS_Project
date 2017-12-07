@@ -79,8 +79,9 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
             pthread_mutex_unlock(&timerMutex);
             if (t == 1) {
+                quantumCounter--;
 
-                printf("Timer\n");
+                printf("Timer\n\n");
                 pthread_mutex_trylock(&timerMutex);
                 theTime = 0;
 
@@ -106,9 +107,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 		    	//throw io 1 interrupt
                 set_state(IO1Process, ready);
                 scheduler(readyProcesses, &IO1Process, get_state(IO1Process));
-                 if(!fifo_is_empty){
-                   IO1Process = fifo_dequeue(IO1Queue);
-                 }
+                IO1Process = fifo_dequeue(IO1Queue);
                 printf("\n");
                 printf("IO1QUEUE is: ");
                 print_fifo_queue(IO1Queue);
@@ -122,9 +121,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 print_fifo_queue(IO2Queue);
                 set_state(IO2Process, ready);
                 scheduler(readyProcesses, &IO2Process, get_state(IO2Process));
-                if(!fifo_is_empty){
-                  IO2Process = fifo_dequeue(IO2Queue);
-                }
+                IO2Process = fifo_dequeue(IO2Queue);
                 printf("\n");
                 printf("IO2QUEUE is: ");
                 print_fifo_queue(IO2Queue);
@@ -137,23 +134,25 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                 //producer function
                 if(get_type(*runningProcess) == producer) {
                     int r = get_pcb_resource(*runningProcess);
+                    printf("(pid: %d) producer %d requested lock in resource pcResource%d - ", get_pid(*runningProcess), r, r);
                     if(lock(getMutex(prodConR[r]), *runningProcess) == 1) {
                         if(checkTime()) break;
                         int g = increment(prodConR[r]);
                         if(checkTime()) break;
                         unlock(getMutex(prodConR[r]), *runningProcess);
-                        printf("(pid: %d) producer %d incremented data in resource p%d: %d\n", get_pid(*runningProcess), r, r, g);
+                        printf("(pid: %d) producer %d incremented data in resource pcResource%d: %d\n", get_pid(*runningProcess), r, r, g);
                     }
 
                 //consumer function
                 } else if(get_type(*runningProcess) == consumer) {
                     int r = get_pcb_resource(*runningProcess);
+                    printf("(pid: %d) consumer %d requested lock in resource pcResource%d - ", get_pid(*runningProcess), r, r);
                     if(lock(getMutex(prodConR[r]), *runningProcess) == 1) {
                         if(checkTime()) break;
                         int g = get(prodConR[r]);
                         if(checkTime()) break;
                         unlock(getMutex(prodConR[r]), *runningProcess);
-                        printf("(pid: %d) consumer %d read data from resource p%d: %d\n", get_pid(*runningProcess), r, r, g);
+                        printf("(pid: %d) consumer %d read data from resource pcResource%d: %d\n", get_pid(*runningProcess), r, r, g);
                     }
 
                 //mutual exclusive process function
@@ -162,10 +161,11 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
 
                     int p = get_pair(*runningProcess);
                     if(deadlock && p) {
-                        printf("yes\n");
                         int r = get_pcb_resource(*runningProcess);
+                        printf("(pid: %d) mutual%d%d requested lock in resource m2Resource%d - ", get_pid(*runningProcess), p, r, r);
                         if(lock(getMutex(mutualR2[r]), *runningProcess) == 1) {
                             if(checkTime()) break;
+                            printf("(pid: %d) mutual%d%d requested lock in resource m1Resource%d - ", get_pid(*runningProcess), p, r, r);
                             if(lock(getMutex(mutualR1[r]), *runningProcess) == 1) {
                                 if(checkTime()) break;
                                 get(mutualR1[r]);
@@ -175,17 +175,18 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                                 unlock(getMutex(mutualR2[r]), *runningProcess);
                                 if(checkTime()) break;
                                 unlock(getMutex(mutualR1[r]), *runningProcess);
-                                printf("%d: got 2 resources\n", get_pid(*runningProcess));
+                                printf("(pid: %d) mutual%d%d got 2 resources: m1Resource%d, m2Resource%d\n", get_pid(*runningProcess), p, r, r, r, r);
                             }
 
                         }
 
                     //no deadlock
                     } else {
-                        printf("no\n");
                         int r = get_pcb_resource(*runningProcess);
+                        printf("(pid: %d) mutual%d%d requested lock in resource m1Resource%d - ", get_pid(*runningProcess), p, r, r);
                         if(lock(getMutex(mutualR1[r]), *runningProcess) == 1) {
                             if(checkTime()) break;
+                            printf("(pid: %d) mutual%d%d requested lock in resource m2Resource%d - ", get_pid(*runningProcess), p, r, r);
                             if(lock(getMutex(mutualR2[r]), *runningProcess) == 1) {
                                 if(checkTime()) break;
                                 get(mutualR1[r]);
@@ -195,7 +196,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                                 unlock(getMutex(mutualR2[r]), *runningProcess);
                                 if(checkTime()) break;
                                 unlock(getMutex(mutualR1[r]), *runningProcess);
-                                printf("%d: got 2 resources\n", get_pid(*runningProcess));
+                                printf("(pid: %d) mutual%d%d got 2 resources: m1Resource%d, m2Resource%d\n", get_pid(*runningProcess), p, r, r, r, r);
                             }
                         }
                     }
@@ -220,6 +221,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                     IO1time = 0;
                     pthread_mutex_unlock(&Io1Mutex);
                 }
+                *runningProcess = NULL;
                 printf("printing IO1QUEUE:");
                 print_fifo_queue(IO1Queue);
 
@@ -243,6 +245,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                   IO2time = 0;
                   pthread_mutex_unlock(&Io2Mutex);
                 }
+                *runningProcess = NULL;
                 printf("PRINTING IO2QUEUE:");
                 print_fifo_queue(IO2Queue);
                 scheduler(readyProcesses, runningProcess, get_state(*runningProcess));
@@ -268,10 +271,10 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
         if (deadlockMonitor() != 0) {
             printf("THERE IS A DEADLOCK\n");
         }
-        quantumCounter--;
+        
 		iteration ++;
 		//printf("ITERATION IS: %d\n", iteration);
-        if (iteration == 1000 && ((pq_isEmpty(*readyProcesses) && processCounter >= PROCESSNUMBER))){
+        if (iteration == 10000){
             printf("we ended\n");
             break;
         }
@@ -338,7 +341,7 @@ int IOTimer(PriorityQ_p * readyProcesses) {
 int pseudoISR(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
 
     // Sets the status to interrupted.
-    set_state(*runningProcess, interrupted);
+    if (get_state(*runningProcess) != waiting && get_state(*runningProcess) != halted) set_state(*runningProcess, interrupted);
 
     sysStack = get_pc(*runningProcess);
 
@@ -429,12 +432,12 @@ int scheduler(PriorityQ_p * readyProcesses, PCB_p* runningProcess, int interrupt
 
       //print_pq(*readyProcesses);
             // dequeue and print next pcb
-          PCB_p pcb = fifo_dequeue(newProcesses);
-          set_state(pcb, ready);
+        PCB_p pcb = fifo_dequeue(newProcesses);
+        set_state(pcb, ready);
 
             // enqueue
-            pq_enqueue(*readyProcesses, pcb);
-        }
+        pq_enqueue(*readyProcesses, pcb);
+    }
 
     // housekeeping if needed
     // If there are 4 terminated processes, clear them now.
@@ -495,19 +498,25 @@ int dispatcher(PriorityQ_p * readyProcesses, PCB_p* runningProcess) {
         //set_cycles(*runningProcess, cycles);
 
         // enqueue
-        pq_enqueue(*readyProcesses, *runningProcess);
 
     }
+
+    if(*runningProcess != NULL && get_state(*runningProcess) != halted) {
+        pq_enqueue(*readyProcesses, *runningProcess);
+    }
+
     //handle IO
 
     //printf("Check3\n");
 
     // dequeue
-    printf("size of PQ is: %d\n", pq_size(*readyProcesses));
+    //printf("size of PQ is: %d\n", pq_size(*readyProcesses));
+    //print_pq(*readyProcesses);
 
     if (pq_size(*readyProcesses) == 0) {
             //PQ is empty...What should we do?
         pq_enqueue(*readyProcesses, create_pcb());
+        // printf("size of PQ is: %d\n", pq_size(*readyProcesses));
     }
     *runningProcess = pq_dequeue(*readyProcesses);
     pthread_mutex_lock(&priorityMutex);
@@ -660,8 +669,9 @@ void *IO1Func(void *t) {
   struct timespec timing;
   //timer startup
   for(;;) {
+    int ioval = 1;
     pthread_mutex_lock(&Io1Mutex);
-    int ioval = IO1time;
+    ioval = IO1time;
     //printf("ioval is: %d\n", ioval);
 
     pthread_mutex_unlock(&Io1Mutex);
@@ -688,8 +698,9 @@ void *IO2Func(void *t) {
   struct timespec timing;
   //timer startup
   for(;;) {
+    int ioval = 1;
     pthread_mutex_trylock(&Io2Mutex);
-    int ioval = IO2time;
+    ioval = IO2time;
     pthread_mutex_unlock(&Io2Mutex);// * NANO_SECOND_MULTIPLIER/ 10000);
     if(ioval == 0) {
       int length = ((rand() % 3) + 2) * 3 * getCyclesFromPriority(7) * NANO_SECOND_MULTIPLIER;

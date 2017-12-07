@@ -44,14 +44,16 @@ PCB_p get_mutex_pcb(mutex_p mutex) {
 int lock(mutex_p mutex, PCB_p pcb) {
     if (mutex->state == locked) {
         if (get_pid(mutex->pcb) == get_pid(pcb)) {
+            printf("success\n");
             return 1;
         } else {
+            printf("fail\n");
             fifo_enqueue(mutex->waiting_q, pcb);
             set_state(pcb, waiting);
             return 0; //failed to acquire lock.
         }
     } else {
-
+        printf("success\n");
         mutex->pcb = pcb;
         mutex->state = locked;
         return 1;
