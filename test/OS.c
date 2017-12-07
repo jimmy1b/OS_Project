@@ -139,10 +139,10 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                     int r = get_pcb_resource(*runningProcess);
                     if(lock(getMutex(prodConR[r]), *runningProcess) == 1) {
                         if(checkTime()) break;
-                        put(prodConR[r], get_pc(*runningProcess));
+                        int g = increment(prodConR[r]);
                         if(checkTime()) break;
                         unlock(getMutex(prodConR[r]), *runningProcess);
-                        printf("%d: put data:%d\n", get_pid(*runningProcess), get_pc(*runningProcess));
+                        printf("(pid: %d) producer %d incremented data in resource p%d: %d\n", get_pid(*runningProcess), r, r, g);
                     }
 
                 //consumer function
@@ -153,7 +153,7 @@ int OS_Simulator(PriorityQ_p * readyProcesses, PCB_p * runningProcess) {
                         int g = get(prodConR[r]);
                         if(checkTime()) break;
                         unlock(getMutex(prodConR[r]), *runningProcess);
-                        printf("%d: get data:%d\n", get_pid(*runningProcess), g);
+                        printf("(pid: %d) consumer %d read data from resource p%d: %d\n", get_pid(*runningProcess), r, r, g);
                     }
 
                 //mutual exclusive process function

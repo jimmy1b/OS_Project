@@ -59,3 +59,6 @@ int startTimer(int priority);
 int timer(PCB_p pcb);
 
 int checkTime();
+
+int deadlockMonitor();
+
